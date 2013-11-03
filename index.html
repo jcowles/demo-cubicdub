@@ -692,7 +692,7 @@ x.a:link, x.a:visited {
             return;
         }
 
-        if (gl && !gl.getExtension("OES_texture_float")) {
+        if (gl && (!gl.getExtension("OES_texture_float") || !gl.getExtension("OES_texture_float_linear"))) {
             alert("Browser fail: floating point textures not supported :(");
             gl = null;
         }
