@@ -1,1716 +1,598 @@
 <html> 
- 
-<head> 
-<title>Cubic Dub</title> 
-<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"> 
-<style>
-a:link, a:visited { 
-	color: #666;
-	text-decoration: none;
-	}
-a:hover, a:active { 
-	color: #dd0000;
-        border-color: #dd0000;
-	text-decoration: none;
-	}
-
-x.a:link, x.a:visited { 
-        padding:15px 50px; border: solid 1px #666; 
-	}
-</style>
-<script type="text/javascript" src="lib/glMatrix-0.9.5.min.js"></script> 
-<script type="text/javascript" src="lib/webgl-utils.js"></script> 
-<script type="text/javascript" src="lib/webgl-debug.js"></script> 
-
-<script type="text/javascript" src="core/lab.js"></script> 
-<script type="text/javascript" src="core/trace.js"></script> 
-<script type="text/javascript" src="gl/geom.js"></script> 
-<script type="text/javascript" src="gl/grid.js"></script> 
-<script type="text/javascript" src="gl/texture.js"></script> 
-<script type="text/javascript" src="gl/fbo.js"></script> 
-<script type="text/javascript" src="gl/shader.js"></script> 
-<script type="text/javascript" src="gl/classic-noise.js"></script> 
-<script type="text/javascript" src="gl/pingpong.js"></script> 
-<script type="text/javascript" src="gl/field.js"></script> 
-<script type="text/javascript" src="gl/bloom.js"></script> 
-<script type="text/javascript" src="gl/particles.js"></script> 
-<script type="text/javascript" src="gl/curves.js"></script> 
-<script type="text/javascript" src="anim.js"></script> 
-
-<!-- DISPLACEMENT SHADERS -->
-<script id="displace-fs" type="x-shader/x-fragment"> 
-    #ifdef GL_ES
-    precision highp float;
-    #endif
- 
-    //uniform int doTex;
-    uniform float time;
-    uniform sampler2D tex0;
-
-    varying vec4 vColor;
-    varying vec3 vLight;
-    varying vec2 vUv;
- 
-    void main(void) {
-        float f = fract(time/1000.);
-        gl_FragColor = vColor; //vec4(vLight, 1); //vec4(1,1,1,1); //vColor;
+    <head> 
+        <title>Cubic Dub</title> 
+        <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"> 
         
-        // strobe:
-        //if (mod(floor(f*100.),2.) == 0.)
-        //   gl_FragColor = vColor*vec4(0.5,0.5,0.5,1.);
-        return;
-        //if (doTex != 0) {
-            //vec2 uv = vec2(sin(vUv.x), sin(vUv.y));
-            //vec4 tCol = texture2D(tex0,uv);
-            gl_FragColor = vColor; // 0.5*vColor+ vec4(tCol, 1.0); //vec4(vLight, 1); //vec4(1,1,1,1); //vColor;
-        //} else {
-        //    gl_FragColor = vColor; //vec4(vLight, 1); //vec4(1,1,1,1); //vColor;
-        //}
-    }
-</script> 
- 
-<script id="displace-vs" type="x-shader/x-vertex"> 
-    attribute vec3 aVertexPosition;
-    attribute vec4 aVertexColor;
-    attribute vec3 aVertexNormal; 
-    attribute vec2 aVertexUV; 
-    uniform float time;
-    //uniform int doTex;
-    uniform int doWave;
-    uniform sampler2D tex0;
-    uniform float res;
+        <link rel="stylesheet" type="text/css" href="css/main.css" />
 
-    uniform mat4 uMVMatrix;
-    uniform mat4 uPMatrix;
-    uniform mat3 uNMatrix;
- 
-    varying vec4 vColor;
-    varying vec3 vLight;
-    varying vec2 vUv;
-    varying vec4 pos;
-    
-    void main(void) {
-        gl_Position = vec4(aVertexPosition, 1.0);
-        vec3 transformedNormal = uNMatrix * aVertexNormal;
-        vec3 tCol;
-        //if (doTex != 0) {
-            float light1 = max(dot(transformedNormal, vec3(0,1,1)), 0.0);
-            float light = light1;
-            vUv = aVertexUV;
-            vLight = vec3(0.2,0.2,0.2) + vec3(.5,.5,.5)*light;
-            vColor = vec4(0.1,0.1,0.1,0.) + vec4(vec3(aVertexColor)*light, aVertexColor.a);
+        <script type="text/javascript" src="lib/glMatrix-0.9.5.min.js"></script> 
+        <script type="text/javascript" src="lib/webgl-utils.js"></script> 
+        <script type="text/javascript" src="lib/webgl-debug.js"></script> 
 
-            vec2 p = (aVertexUV- .5)*2.0;
-            float a = atan(p.y, p.x);
-            float r = sqrt(dot(p, p));
-            vec2 uv = aVertexUV;
-            float depth;
-            vec4 toff;
+        <script type="text/javascript" src="core/lab.js"></script> 
+        <script type="text/javascript" src="core/trace.js"></script> 
+        <script type="text/javascript" src="gl/geom.js"></script> 
+        <script type="text/javascript" src="gl/grid.js"></script> 
+        <script type="text/javascript" src="gl/texture.js"></script> 
+        <script type="text/javascript" src="gl/fbo.js"></script> 
+        <script type="text/javascript" src="gl/shader.js"></script> 
+        <script type="text/javascript" src="gl/classic-noise.js"></script> 
+        <script type="text/javascript" src="gl/pingpong.js"></script> 
+        <script type="text/javascript" src="gl/field.js"></script> 
+        <script type="text/javascript" src="gl/bloom.js"></script> 
+        <script type="text/javascript" src="gl/particles.js"></script> 
+        <script type="text/javascript" src="gl/curves.js"></script> 
 
-            if (doWave > 0) { //time/1000. > 20. && time/1000. < 40.) {
-                uv.x = .75*(time/1000.)+0.999/r;
-                uv.y = .5*sin(.0+p.y*(time/2000.)); a/3.1416;
+        <script type="text/javascript" src="anim.js"></script> 
+        <script type="text/javascript" src="main.js"></script> 
 
-                // wrap u/v
-                uv.x = fract(abs(uv.x));
-                uv.y = fract(abs(uv.y));
-                toff = texture2D(tex0, uv);
-                float s = .3*(1.+sin(time/3000.));
-                s = clamp(r-.4,0.,1.);
-                //if (time/1000. < 20. || time/1000. > 40.)
-                //    s = -.0;
-                depth = ((s)*toff.z*(.2+r)) + 
-                        (1.-s)*texture2D(tex0, floor(aVertexUV*res)/res).z;
-            } else {
-                toff = texture2D(tex0,floor(uv*res)/res);
-                depth = toff.z;
+        <!-- DISPLACEMENT SHADERS -->
+        <script id="displace-fs" type="x-shader/x-fragment"> 
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+         
+            //uniform int doTex;
+            uniform float time;
+            uniform sampler2D tex0;
+
+            varying vec4 vColor;
+            varying vec3 vLight;
+            varying vec2 vUv;
+         
+            void main(void) {
+                float f = fract(time/1000.);
+                gl_FragColor = vColor;
+                return;
             }
+        </script> 
+        <script id="displace-vs" type="x-shader/x-vertex"> 
+            attribute vec3 aVertexPosition;
+            attribute vec4 aVertexColor;
+            attribute vec3 aVertexNormal; 
+            attribute vec2 aVertexUV; 
+            uniform float time;
+            uniform int doWave;
+            uniform sampler2D tex0;
+            uniform float res;
 
-            if (depth <= 10.) {
-                //} else {
-                    vColor = vec4((vColor*0.25).xyz,1.);
-                //}
-            }
-
+            uniform mat4 uMVMatrix;
+            uniform mat4 uPMatrix;
+            uniform mat3 uNMatrix;
+         
+            varying vec4 vColor;
+            varying vec3 vLight;
+            varying vec2 vUv;
+            varying vec4 pos;
             
-            if (depth <= 8.) {
-                float PI = 3.1416;
-                depth += sin(sin(time/4000.*35.*PI + p.x*20.*p.y));
-                if (mod(sin(gl_Position.x)+sin(gl_Position.y), 5.) < 4.) {
-                    vColor = vec4(vColor.xyz*(1.+max(0., min(depth, 5.91)/5.)),1.);
-                }
-            }
-            //if (depth > 0. && depth <= 1.) {
-                //depth = 0.;// *1000.;;
-                //depth *= 100.;
-            //}
-            //float expand = max(0., r-.1)*40.*-1.;
-            //float expand = sign(gl_Position.x) * max(0., r-.1)*200.;
-            //float PI = 3.1416;
-            //vec2 morph;
-            //if (time/1000. > 60. && time/1000. < 75.) {
-            //    morph = vec2(toff.x + sign(p.x+.1*cos(time/5000.))*expand,
-            //                      toff.y + sign(p.y+.1*sin(time/5000.))*expand); 
-            //    morph.xy = mix(toff.xy, morph.xy, abs(sin(time/4000.*PI*(140./120.))));
-            //} else {
-            //    morph = vec2(0.);
-            //}
-            //gl_Position.xy += morph.xy; //mix(toff.xy, morph.xy, time/1000. / 60.);
-            gl_Position.xy += toff.xy; 
-            
-            // expand width
-            //gl_Position.x += 50.*p.x; 
-            
-            gl_Position.z += depth; // * 2.*(1.-(r*.5)*(r*.5));
-
-
-            //vColor = texture2D(tex0, aVertexUV);
-            //vColor.xyz = 1. - vColor.xyz;
-            //vColor.a = 1.0;
-        //} 
-        //else {
-        //    float light = max(dot(transformedNormal, normalize(vec3(gl_Position))), 0.0);
-        //    vUv = aVertexUV;
-        //    vLight = vec3(0.2,0.2,0.2) + vec3(.5,.5,.5)*light;
-        //    vColor = vec4(0.1,0.1,0.1,0.) + vec4(vec3(aVertexColor)*light, aVertexColor.a);
-
-        //    tCol = vec3(vColor);
-        //}
-        gl_Position = uPMatrix * uMVMatrix * gl_Position; 
-    }
-</script> 
-
-<!-- DEPTH MAPPING SHADER -->
-
-<script id="depth-fs" type="x-shader/x-fragment"> 
-    #ifdef GL_ES
-    precision highp float;
-    #endif
- 
-    varying vec4 vposition;
- 
-    void main() {
-        vec4 color;
-        vec3 q = vposition.xyz; /// vposition.w;
-    
-        color = vec4(0.,0.,q.z,1.);
-
-        /*
-        float depth = q.z; //0.5*(q.z + 1.0);
-        color.r = fract(16777216.0 * depth);
-        color.g = fract(65536.0 * depth);
-        color.b = fract(256.0 * depth);
-        color.a = depth;
-        */
-
-        // unpack:
-        //float depth = (color.a +
-        //     color.b / 256.0 +
-        //     color.g / 65536.0 +
-        //     color.r / 16777216.0) + 0.008 ;
- 
-        gl_FragColor = color;
-    }
-</script> 
- 
-<script id="depth-vs" type="x-shader/x-vertex"> 
-
-    attribute vec3 aVertexPosition;
-
-    uniform mat4 uPMatrix;
-    uniform mat4 uMVMatrix;
-    uniform mat3 uNMatrix;
-    uniform float time;
-    //uniform int doTex;
-    
-    varying vec4 vposition;
-
-    void main() {
-        vposition = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-        //vposition = uPMatrix * aVertexPosition;
-        gl_Position = vposition;
-    }
-</script> 
-
-<!-- FIELD SHADER -->
-
-<script id="field-fs" type="x-shader/x-fragment"> 
-    #ifdef GL_ES
-    precision highp float;
-    #endif
-
-    varying vec2 pos;
-    uniform float time;
-    uniform float dt;
-    uniform int init;
-    uniform sampler2D tex0;
-    uniform int debug;
-
-    #define MAX 2
-    #define MIN -1
-    void main() {
-        vec2 uv = .5+.5*pos ;
-        if (debug==1) {
-            gl_FragColor = texture2D(tex0, uv);
-        } else {
-            gl_FragColor = .995*texture2D(tex0, uv);
-            gl_FragColor += vec4(0.,0.,min(gl_FragColor.z,.01),0.);
-            //return;
-            int i = -1; int j = -1;
-            float factor = .0005;
-            gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
-            j++;
-            gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
-            j++;
-            gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
-
-            i++;
-            j=-1;
-            gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
-            j++;
-            gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
-            j++;
-            gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
-
-            i++;
-            j=-1;
-            gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
-            j++;
-            gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
-            j++;
-            gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
-            return;
-            gl_FragColor =  .2*texture2D(tex0, uv + vec2( .001,0.));
-            gl_FragColor += .2*texture2D(tex0, uv + vec2(-.001,0.));
-            gl_FragColor += .2*texture2D(tex0, uv + vec2(0.,.001));
-            gl_FragColor += .2*texture2D(tex0, uv + vec2(0.,-.001));
-            gl_FragColor += .2*texture2D(tex0, uv);
-            return;
-            float PI = 3.1415;
-            float s = .7*cos(time/1000.+pos.x*PI);
-            if (s < pos.y+.1 && s > pos.y-.3)
-                gl_FragColor = vec4(0.,0.,0.,11.);
-            else
-                gl_FragColor = vec4(0.,.0,0.,0.);
-                //gl_FragColor = vec4(0.,.5,1.,1.);
-        }
-    }
-</script> 
- 
-<script id="field-vs" type="x-shader/x-vertex"> 
-    attribute vec2 vertex;
-
-    varying vec2 pos;
-
-    void main() {
-        pos = vertex;
-        gl_Position = vec4(vertex.x,vertex.y,0.,1.);
-    }
-</script> 
-
-
-<!-- BLT SHADER -->
-<script id="blt-fs" type="x-shader/x-fragment"> 
-    #ifdef GL_ES
-    precision highp float;
-    #endif
- 
-    varying vec2 uv;
-    uniform sampler2D tex0;
-    uniform sampler2D tex1;
-    uniform sampler2D tex2;
-    uniform sampler2D tex3;
-    uniform float cutoff;
-    uniform int texCount;
-    uniform int doVignette;
-    uniform float invert;
-    uniform vec2 colorSep;
-
-    vec4 highpass(vec4 clr) {
-        if (cutoff == 0.0) return clr;
-        clr.x = clr.x > cutoff ? clr.x : 0.0;
-        clr.y = clr.y > cutoff ? clr.y : 0.0;
-        clr.z = clr.z > cutoff ? clr.z : 0.0;
-        if (clr.x > cutoff || clr.y > cutoff || clr.z > cutoff) {
-            return vec4(.3,.3,1.0,1.0);
-        }
-        return clr;
-    }
- 
-    // component separation
-    vec4 sep(sampler2D tex) {
-        if (colorSep.x == 0. && colorSep.y == 0.)
-            return texture2D(tex, uv);
-        //vec4 c = texture2D(tex, colorSep);
-        vec4 g = texture2D(tex, uv+colorSep);
-        vec4 r = texture2D(tex, uv+-1.*colorSep);
-        vec4 b = texture2D(tex, uv+vec2(colorSep.y*-1., colorSep.x));
-
-        return vec4(r.x,g.y,b.z, 1.0);
-    }
-
-    vec4 vignette(vec4 color) {
-        if (doVignette != 0) {
-            float d = abs(length(uv - .5));
-            if (d > 0.0)
-                color = vec4(vec3(clamp(1.-(d),0.,1.)*color), 1.0);
-        }
-        
-        return color;
-    }
-
-    void main() {
-    
-        gl_FragColor = highpass(sep(tex0));
-        if (texCount > 1) 
-            gl_FragColor += sep(tex1);
-        if (texCount > 2) 
-            gl_FragColor += sep(tex2);
-        if (texCount > 3) 
-            gl_FragColor += 2.*sep(tex3);
-        
-        gl_FragColor = vignette(gl_FragColor);
-        //gl_FragColor.xyz = vec3(invert) - gl_FragColor.xyz;
-    }
-</script> 
- 
-<script id="blt-vs" type="x-shader/x-vertex"> 
-    attribute vec2 vertex;
-    varying vec2 uv;
-    uniform float stretchFactor;
-    void main() {
-        uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
-        //uv.x = ((uv.x-.5)*stretchFactor)+.5;
-        gl_Position = vec4(vertex.x,vertex.y,0.,1.);
-    }
-</script> 
-
-<!-- RAW COPY SHADER -->
-<script id="copy-fs" type="x-shader/x-fragment"> 
-    #ifdef GL_ES
-    precision highp float;
-    #endif
- 
-    varying vec2 uv;
-    uniform sampler2D tex0;
-    void main() {
-        gl_FragColor = texture2D(tex0, uv);
-    }
-</script> 
- 
-<script id="copy-vs" type="x-shader/x-vertex"> 
-    attribute vec2 vertex;
-    varying vec2 uv;
-    void main() {
-        uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
-        gl_Position = vec4(vertex.x,vertex.y,0.,1.);
-    }
-</script> 
-
-
-<!-- BLUR SHADER -->
-<script id="blur-fs" type="x-shader/x-fragment"> 
-    #ifdef GL_ES
-    precision highp float;
-    #endif
- 
-    varying vec2 uv;
-    uniform sampler2D tex0;
-
-    uniform float coefficients[3];
-    uniform float offsetx;
-    uniform float offsety;
-    uniform int huge;
-
-    void main(void)
-    {
-        vec4 c;
-        vec2 offset = vec2(offsetx, offsety);
-
-        c  = coefficients[0] * texture2D(tex0, uv - offset);
-        c += coefficients[1] * texture2D(tex0, uv);
-        c += coefficients[2] * texture2D(tex0, uv + offset);
-
-        if (huge > 0) {
-            float coef = coefficients[0] * .2;
-            for (float i = 2.; i < 10.; i+=1.) {
-                c += coef * texture2D(tex0, uv + i*offset);
-                c += coef * texture2D(tex0, uv - i*offset);
-                coef *= .99;
-            }
-            for (float i = 10.; i < 80.; i+=5.) {
-                c += coef * texture2D(tex0, fract(uv + i*offset));
-                c += coef * texture2D(tex0, fract(uv - i*offset));
-                coef *= .99;
-            }
-        }
-
-        gl_FragColor = c;
-    } 
-</script> 
- 
-<script id="blur-vs" type="x-shader/x-vertex"> 
-    attribute vec2 vertex;
-    varying vec2 uv;
-    void main() {
-        uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
-        gl_Position = vec4(vertex.x,vertex.y,0.,1.);
-    }
-</script> 
-
-<!-- LENS SCHMUTZ SHADER -->
-<script id="schmutz-fs" type="x-shader/x-fragment"> 
-    #ifdef GL_ES
-    precision highp float;
-    #endif
- 
-    varying vec2 uv;
-    uniform sampler2D tex0;
-
-    int ellipse(vec2 uv, vec2 pos, vec2 rad) {
-        vec2 dp = uv - pos;
-        return (dp.x*dp.x)/(rad.x*rad.x) 
-             + (dp.y*dp.y)/(rad.y*rad.y) <= 1. ? 1 : 0;
-    }
-
-    vec4 schmutz(vec2 uv) {
-        vec4 c = vec4(0.,0.,0.,0.);
-
-        // test each schmutz spot
-        vec2 spot1 = vec2(0.5, 0.5);
-        if (1 == ellipse(uv, vec2(0.1, 0.1), vec2(.015,.02)))
-            return vec4(1.,1.,1.,.1);
-
-
-        return c;
-    }
-
-    void main(void)
-    {
-        vec4 c = vec4(0.,0.,0.,0.); //texture2D(tex0, uv);
-
-        vec4 s = schmutz(uv);
-
-        gl_FragColor = c+s;
-    } 
-</script> 
- 
-<script id="schmutz-vs" type="x-shader/x-vertex"> 
-    attribute vec2 vertex;
-    varying vec2 uv;
-    void main() {
-        uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
-        gl_Position = vec4(vertex.x,vertex.y,0.,1.);
-    }
-</script> 
-
-<!-- PARTICLE UPDATE SHADER -->
-<script id="particle-fs" type="x-shader/x-fragment"> 
-    #ifdef GL_ES
-    precision highp float;
-    #endif
- 
-    #define POS 0
-    #define VEL 1
-
-    varying vec2 uv;
-    uniform int mode;
-    uniform int init;
-    uniform int debug;
-    uniform int doAttract;
-    uniform float time;
-    uniform float dt;
-    uniform sampler2D tex0;
-    uniform sampler2D tex1;
-    uniform sampler2D tex2;
-    uniform sampler2D tex3;
-
-    void main(void)
-    {
-        vec4 c;
-        vec4 old = texture2D(tex0, uv);
-
-        if (mode == POS) {
-            vec4 vel = texture2D(tex1, uv);
-            //c = clamp(old + vec4(vec3(vel*dt), 1.0), 0.0, 1.0);
-            c = old + vec4(vec3(vel*dt), 1.0);
-        } else if (mode == VEL) {
-            vec4 accel = texture2D(tex1, vec2(uv.x, uv.y));
-            //vec4 accel = texture2D(tex1, vec2(fract(pos.x), fract(pos.y)));
-            vec4 pos = texture2D(tex2, uv);
-            vec4 attr = texture2D(tex3, uv);
-
-            float drag = 1. - dt*1.333;
-
-            if (doAttract > 0) { //time/1000. > 16.) {
-                old.xyz = old.xyz*drag + 9.*(attr.xyz - pos.xyz)*dt;
-            } else {
-                old.x = old.x*drag + accel.x*dt;
-                old.y = old.y*drag + accel.y*dt;
-            }
-
-            c = old;
-        } else {
-            c = vec4(0.,1.,1.,1.);
-        }
-
-        gl_FragColor = c;
-    } 
-</script> 
- 
-<script id="particle-vs" type="x-shader/x-vertex"> 
-    attribute vec2 vertex;
-    varying vec2 uv;
-    void main() {
-        uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
-        gl_Position = vec4(vertex.x,vertex.y,0.,1.);
-    }
-</script> 
-
-<!-- DISTORTION SHADER -->
-<!-- FILM GRAIN SHADER -->
-<script id="grain-fs" type="x-shader/x-fragment"> 
-    #ifdef GL_ES
-    precision highp float;
-    #endif
- 
-    varying vec2 uv;
-    uniform sampler2D tex0;
-    uniform float time;
-    void main() {
-        vec2 uvs = uv + vec2(sin(time), sin(sin(time)));
-        uvs.x = fract(uvs.x);
-        uvs.y = fract(uvs.y);
-        gl_FragColor = vec4(1.0, 1.0, 1.0, texture2D(tex0, uvs).a);
-        //gl_FragColor = mix(gl_FragColor, vec4(gl_FragColor.xyz, gl_FragColor.a+.1), mod(gl_FragCoord.y, 2.));
-    }
-</script> 
- 
-<script id="grain-vs" type="x-shader/x-vertex"> 
-    attribute vec2 vertex;
-    varying vec2 uv;
-    void main() {
-        uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
-        gl_Position = vec4(vertex.x,vertex.y,0.,1.);
-    }
-</script> 
-
-<!-- CURVE DRAWING SHADER -->
-<script id="curveDraw-fs" type="x-shader/x-fragment"> 
-    #ifdef GL_ES
-    precision highp float;
-    #endif
- 
-    varying vec2 uv;
-    uniform sampler2D tex0;
-    uniform float time;
-
-    vec4 testCurve(vec4 cv, vec4 cd) {
-        if (!(uv.x > cv.x && uv.x < cv.z &&
-            uv.y > cv.y - cd.w && uv.y < cv.w + cd.w)) {
-            return vec4(0.,0.,0.,0.);
-        }
-
-        float PI = 3.1416;
-        float t = (uv.x - cv.x) / (cv.z - cv.x);
-        float s = 2.* (.5 - (uv.y - (cv.y - cd.w)) / (2.*cd.w));
-        float c = .85*sin((cd.x + time/200. + t * 2. * PI ));
-        //float c = .9*sin(sin(sin(cd.x + time/200. + t * 2. * PI )+time/1000.+cd.x) + cd.x+time/1000.);
-        if (time == 0.)
-            return vec4(1.,1.,0.,0.);
-        float h = 1. + 1.8*smoothstep(0., 1., max(0., t - .95) / 0.05);
-        float hc =  max(0.,  t-.975) / .025;
-        hc = 1. - (hc*hc*hc);
-        c = max(0., hc*h*t * .8 * cd.w - abs(s - c))*10.;
-
-        //if (t > .95 && s
-
-        if (c == 0.) return vec4(0.);
-
-        return vec4(0., 0., sin(t*2.*PI) + c*2.+20., 0.);
-        //return vec4(c, c, c, 0.);
-    }
-
-    #define count 1.
-    vec4 getColor(vec2 p) {
-        vec4 c = vec4(0.,0.,0.,1.);
-        for (float i = 0.; i < count; i++) {
-            c += testCurve( texture2D(tex0, vec2(i/(count-1.), 0.)),
-                            texture2D(tex0, vec2(i/(count-1.), 1.))  );
-        }
-        return c;
-        //return vec4(c.x, c.y, c.z*1.+ 12., 1.0);
-    }
-
-    void main() {
-        gl_FragColor = getColor(uv); //vec4(1.0, 1.0, 1.0, texture2D(tex0, uvs).a);
-    }
-</script> 
- 
-<script id="curveDraw-vs" type="x-shader/x-vertex"> 
-    attribute vec2 vertex;
-    varying vec2 uv;
-    void main() {
-        uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
-        gl_Position = vec4(vertex.x,vertex.y,0.,1.);
-    }
-</script> 
-
-
-
-<!-- 
-  *********************************************************
-    END SHADERS 
-  *********************************************************
--->
-
-
-<script type="text/javascript"> 
-    var gl;
-    var DEBUG_MODE = false;
-    var RENDER_MODE = false;
-    var MENV_MODE = false;
-    var RENDER_FPS = 30;
-    var hadError = false;
-    // everything is in milliseconds, so SPF is actually a bad name
-    var RENDER_SPF = 1 / RENDER_FPS * 1000;
-    var canvas;
- 
-    
-    function initGL(canvas) {
-        //try {
-            if (!DEBUG_MODE) 
-                gl =WebGLUtils.setupWebGL(canvas, { antialias: false,
-                                  stencil: true } );
-            else
-	        gl =WebGLDebugUtils.makeDebugContext(canvas.getContext("experimental-webgl"));
-
-        //} catch (e) { }
-        if (!gl) {
-            alert("Could not initialize WebGL -- please visit http://get.webgl.org/ for help.");
-            hadError = true;
-            return;
-        }
-
-        if (gl && (!gl.getExtension("OES_texture_float") || !gl.getExtension("OES_texture_float_linear"))) {
-            alert("Browser fail: floating point textures not supported :(");
-            gl = null;
-        }
-
-        if (gl) {
-            gl.viewportWidth = canvas.clientWidth;
-            gl.viewportHeight = canvas.clientHeight;
-        }
-    }
- 
-    var shader;
-    var shaderProgram;
-    var depthShader;
-    var bltShader;
-    var copyShader;
-    var grainShader;
-    var schShader;
-    var partShader;
- 
-    function initShaders() {
-        var uniforms = [ "time", 
-                        //"doTex", 
-                        "doWave", 
-                        "tex0", 
-                        "uPMatrix", 
-                        "uMVMatrix", 
-                        "uNMatrix",
-                        "res"
-                        ];
-
-        var attribs = [  "aVertexPosition",
-                        "aVertexColor",
-                        "aVertexUV",
-                        "aVertexNormal" 
-                        ];
-
-        shader = new Lab.Shader("displace-fs", "displace-vs", uniforms, attribs);
-        
-        shader.init(gl);
-        shader.prog.vertex  = shader.prog.aVertexPosition;
-        shader.prog.color   = shader.prog.aVertexColor;
-        shader.prog.uv      = shader.prog.aVertexUV;
-        shader.prog.normal  = shader.prog.aVertexNormal;
-        shaderProgram = shader.prog;
-
-        uniforms    = [
-                        "time", 
-                        //"doTex", 
-                        "uPMatrix", 
-                        "uMVMatrix", 
-                        "uNMatrix",
-                    ];
-        attribs     = [
-                        "aVertexPosition",
-                    ];
-        depthShader = new Lab.Shader("depth-fs", "depth-vs", uniforms, attribs);
-        depthShader.init(gl);
-        depthShader.prog.vertex  = depthShader.prog.aVertexPosition;
-        //shader.bind(gl);
-
-        uniforms = [ "tex0" ];
-        attribs  = [ "vertex" ];
-        schShader = new Lab.Shader("schmutz-fs", "schmutz-vs", uniforms, attribs);
-        schShader.init(gl);
-
-        uniforms = [  "debug", "init", "time", "dt", "mode", "tex0", "tex1", "tex2", "tex3", "doAttract" ];
-        attribs  = [ "vertex" ];
-        partShader = new Lab.Shader("particle-fs", "particle-vs", uniforms, attribs);
-        partShader.init(gl);
-    }
- 
-    var mvMatrix = mat4.create();
-    var mvMatrixStack = [];
-    var pMatrix = mat4.create();
-    var tempMat4 = mat4.create();
- 
-    function mvPushMatrix() {
-        var copy = mat4.create();
-        mat4.set(mvMatrix, copy);
-        mvMatrixStack.push(copy);
-    }
- 
-    function mvPopMatrix() {
-        if (mvMatrixStack.length == 0) {
-            throw "Invalid popMatrix!";
-        }
-        mvMatrix = mvMatrixStack.pop();
-    }
- 
-    function setMatrixUniforms(prog) {
-        gl.uniformMatrix4fv(prog.uPMatrix, false, pMatrix);
-        gl.uniformMatrix4fv(prog.uMVMatrix, false, mvMatrix);
-
-        var normalMatrix = mat3.create();
-        mat4.toInverseMat3(mvMatrix, normalMatrix);
-        mat3.transpose(normalMatrix);
-        gl.uniformMatrix3fv(prog.uNMatrix, false, normalMatrix);
-    }
- 
-    function degToRad(degrees) {
-        return degrees * Math.PI / 180;
-    }
- 
-    var grid = new Lab.Grid();
-    var cubes = new Lab.Geom.Cubes();
-    var cube = new Lab.Geom.Cubes();
-    var field = new Lab.Field(150, 150); //1024, 428);
-    var bloom = new Lab.Bloom(1024, 428);
-    var particleField = new Lab.ParticleField(150, 150);
-    var particleField2 = new Lab.ParticleField(150, 150);
-    var grainTex = new Lab.Texture(1024, 428);
-    var noiseTex = new Lab.Texture(150, 150);
-    //var curves = new Lab.Curves();
-    var quad;
-
-    //
-    // TODO: Move these into classes
-    //
-    var cam = {};
-
-    var render = {};
-    render.sep = [0,0];
-    render.res = 1000;
-    render.schmutz = false;
-    render.cam = {};
-    render.time = {};
-    render.time.scale = 1.0;
-    render.time.value = 0.0;
-    render.bloom = true;
-    render.colorSep = true;
-    render.vignette = true;
-    render.doWave = false;
-    render.doAttract = false;
-    render.updateField = false;
-    render.posTex = null;
-    render.grain = true;
-    render.invert = false;
-    render.zClip = 1000;
-
-
-    // number of cubes in x and y directions
-    var cx = 150, cy = 150;
-
-    // need #pixles = #cubes * 8, where each pixel maps to
-    // a vertex providing the location of the cube
-    // N = cx * cy * 8 = cx * cy * 2 * 2 * 2 = (cy * 4) * (cx * 2)
-    var fbo = new Lab.Fbo(cx*2, cy*2); //512,512); //cx*2, cy*4);
-    var ppFinal; //cx*2, cy*4);
-    var acc;
-
-    function initBuffers() {
-        noise = new ClassicalNoise();
-        grid.init(gl);
-        fbo.init(gl);
-        quad =  Lab.Geom.makeQuad2D(gl);
-
-        copyShader = new Lab.Shader("copy-fs", "copy-vs", ["tex0"], ["vertex"]);
-        copyShader.init(gl);
-
-        grainShader = new Lab.Shader("grain-fs", "grain-vs", ["tex0", "time"], ["vertex"]);
-        grainShader.init(gl);
-
-        bltShader = new Lab.Shader("blt-fs", "blt-vs", bloom.blt.uniforms, bloom.blt.attribs);
-        bltShader.init(gl);
-        ppFinal = new Lab.PingPongBuffer(1024,428, bltShader.prog.tex0)
-        ppFinal.init(gl);
-        ppFinal.inputSrc = false;
-        var blurShader = new Lab.Shader("blur-fs", "blur-vs", bloom.blur.uniforms, bloom.blur.attribs);
-        blurShader.init(gl);
-        bloom.init(gl, bltShader, blurShader);
-
-        //
-        // simple decay field
-        //
-        var tempShader = new Lab.Shader("field-fs", "field-vs", field.uniforms, field.attribs);
-        tempShader.init(gl);
-        /*
-        var initPattern = new Float32Array(field.width*field.height*4);
-        for (var x = 0; x < field.width; x++) {
-            for (var y = 0; y < field.height; y++) {
-                var xv = (x/(field.width-1)-.5)*2
-                var yv = (y/(field.height-1)-.5)*2
-                var s = .7*Math.cos(xv*Math.PI);
-                var idx = (y*field.width + x)*4;
-                if (s < yv+.1 && s > yv-.3) {
-                    initPattern[idx]   =  .0; // R
-                    initPattern[idx+1] =  .0; // G
-                    initPattern[idx+2] =  .0; // B
-                    initPattern[idx+3] = 15.0; // A
+            void main(void) {
+                gl_Position = vec4(aVertexPosition, 1.0);
+                vec3 transformedNormal = uNMatrix * aVertexNormal;
+                vec3 tCol;
+                float light1 = max(dot(transformedNormal, vec3(0,1,1)), 0.0);
+                float light = light1;
+                vUv = aVertexUV;
+                vLight = vec3(0.2,0.2,0.2) + vec3(.5,.5,.5)*light;
+                vColor = vec4(0.1,0.1,0.1,0.) + vec4(vec3(aVertexColor)*light, aVertexColor.a);
+
+                vec2 p = (aVertexUV- .5)*2.0;
+                float a = atan(p.y, p.x);
+                float r = sqrt(dot(p, p));
+                vec2 uv = aVertexUV;
+                float depth;
+                vec4 toff;
+
+                if (doWave > 0) {
+                    uv.x = .75*(time/1000.)+0.999/r;
+                    uv.y = .5*sin(.0+p.y*(time/2000.)); a/3.1416;
+
+                    // wrap u/v
+                    uv.x = fract(abs(uv.x));
+                    uv.y = fract(abs(uv.y));
+                    toff = texture2D(tex0, uv);
+                    float s = .3*(1.+sin(time/3000.));
+                    s = clamp(r-.4,0.,1.);
+                    depth = ((s)*toff.z*(.2+r)) + 
+                            (1.-s)*texture2D(tex0, floor(aVertexUV*res)/res).z;
                 } else {
-                    initPattern[idx]   = .0;
-                    initPattern[idx+1] = .0;
-                    initPattern[idx+2] = .0;
-                    initPattern[idx+3] = .0;
+                    toff = texture2D(tex0,floor(uv*res)/res);
+                    depth = toff.z;
+                }
+
+                if (depth <= 10.) {
+                    vColor = vec4((vColor*0.25).xyz,1.);
+                }
+                
+                if (depth <= 8.) {
+                    float PI = 3.1416;
+                    depth += sin(sin(time/4000.*35.*PI + p.x*20.*p.y));
+                    if (mod(sin(gl_Position.x)+sin(gl_Position.y), 5.) < 4.) {
+                        vColor = vec4(vColor.xyz*(1.+max(0., min(depth, 5.91)/5.)),1.);
+                    }
+                }
+                gl_Position.xy += toff.xy; 
+                gl_Position.z += depth; // * 2.*(1.-(r*.5)*(r*.5));
+                gl_Position = uPMatrix * uMVMatrix * gl_Position; 
+            }
+        </script> 
+
+        <!-- DEPTH MAPPING SHADER -->
+        <script id="depth-fs" type="x-shader/x-fragment"> 
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+         
+            varying vec4 vposition;
+         
+            void main() {
+                vec4 color;
+                vec3 q = vposition.xyz; /// vposition.w;
+                color = vec4(0.,0.,q.z,1.);
+                gl_FragColor = color;
+            }
+        </script> 
+        <script id="depth-vs" type="x-shader/x-vertex"> 
+
+            attribute vec3 aVertexPosition;
+
+            uniform mat4 uPMatrix;
+            uniform mat4 uMVMatrix;
+            uniform mat3 uNMatrix;
+            uniform float time;
+            
+            varying vec4 vposition;
+
+            void main() {
+                vposition = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+                gl_Position = vposition;
+            }
+        </script> 
+
+        <!-- FIELD SHADER -->
+        <script id="field-fs" type="x-shader/x-fragment"> 
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+
+            varying vec2 pos;
+            uniform float time;
+            uniform float dt;
+            uniform int init;
+            uniform sampler2D tex0;
+            uniform int debug;
+
+            #define MAX 2
+            #define MIN -1
+            void main() {
+                vec2 uv = .5+.5*pos ;
+                if (debug==1) {
+                    gl_FragColor = texture2D(tex0, uv);
+                } else {
+                    gl_FragColor = .995*texture2D(tex0, uv);
+                    gl_FragColor += vec4(0.,0.,min(gl_FragColor.z,.01),0.);
+                    //return;
+                    int i = -1; int j = -1;
+                    float factor = .0005;
+                    gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
+                    j++;
+                    gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
+                    j++;
+                    gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
+
+                    i++;
+                    j=-1;
+                    gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
+                    j++;
+                    gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
+                    j++;
+                    gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
+
+                    i++;
+                    j=-1;
+                    gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
+                    j++;
+                    gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
+                    j++;
+                    gl_FragColor +=  (factor)*texture2D(tex0, uv + vec2( float(i)/100., float(j)/100. ));
+                    return;
+                    gl_FragColor =  .2*texture2D(tex0, uv + vec2( .001,0.));
+                    gl_FragColor += .2*texture2D(tex0, uv + vec2(-.001,0.));
+                    gl_FragColor += .2*texture2D(tex0, uv + vec2(0.,.001));
+                    gl_FragColor += .2*texture2D(tex0, uv + vec2(0.,-.001));
+                    gl_FragColor += .2*texture2D(tex0, uv);
+                    return;
+                    float PI = 3.1415;
+                    float s = .7*cos(time/1000.+pos.x*PI);
+                    if (s < pos.y+.1 && s > pos.y-.3)
+                        gl_FragColor = vec4(0.,0.,0.,11.);
+                    else
+                        gl_FragColor = vec4(0.,.0,0.,0.);
                 }
             }
-        }*/
+        </script> 
+        <script id="field-vs" type="x-shader/x-vertex"> 
+            attribute vec2 vertex;
 
-        field.init(gl, tempShader, textData, true); //initPattern);
+            varying vec2 pos;
 
-        //
-        // particle field
-        //
-        var positions = new Float32Array(particleField.width*particleField.height*4);
-        var velocities= new Float32Array(particleField.width*particleField.height*4);
-        var accelerations= new Float32Array(particleField.width*particleField.height*4);
-        var upSpeed = 8;
-        for (var x = 0; x < particleField.width; x++) {
-            for (var y = 0; y < particleField.height; y++) {
-                var loc = 4*(x*particleField.width+y);
-                positions[loc+0] = .0*y;
-                positions[loc+1] = .0*x;
-                positions[loc+2] = 0; //
-                positions[loc+3] = 1.0; //(x*y / (particleField.width*particleField.height));;
-
-                var r = Math.random()*upSpeed;
-                r *= 1;
-                velocities[loc+0] = 0;//r; //0.00000;
-                velocities[loc+1] = 0;//r; //0.00000;
-                velocities[loc+2] = r //0.1;
-                velocities[loc+3] = 1.0;
-
-                accelerations[loc+0] = (noise.noise(x/particleField.width*12, 
-                                             y/particleField.height*5,0)) * 500;
-                accelerations[loc+1] = (noise.noise(x/particleField.width*37, 
-                                             y/particleField.height*7,0)) * 500;
-                accelerations[loc+0] = 0;
-                accelerations[loc+1] = 0;
-                accelerations[loc+2] = r;
-                accelerations[loc+3] = 0;
+            void main() {
+                pos = vertex;
+                gl_Position = vec4(vertex.x,vertex.y,0.,1.);
             }
-        }
-        acce = accelerations;
-        particleField.init(gl, partShader, partShader, positions, velocities, accelerations);
-        for (var x = 0; x < particleField.width; x++) {
-            for (var y = 0; y < particleField.height; y++) {
-                var loc = 4*(x*particleField.width+y);
-                positions[loc+0] = .0*y;
-                positions[loc+1] = .0*x;
-                positions[loc+2] = 0; //
-                positions[loc+3] = 1.0; //(x*y / (particleField.width*particleField.height));;
+        </script> 
 
-                var r = Math.random()*upSpeed;
-                r *= 1;
-                velocities[loc+0] = 0;//r; //0.00000;
-                velocities[loc+1] = 0;//r; //0.00000;
-                velocities[loc+2] = r //0.1;
-                velocities[loc+3] = 1.0;
+        <!-- BLT SHADER -->
+        <script id="blt-fs" type="x-shader/x-fragment"> 
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+         
+            varying vec2 uv;
+            uniform sampler2D tex0;
+            uniform sampler2D tex1;
+            uniform sampler2D tex2;
+            uniform sampler2D tex3;
+            uniform float cutoff;
+            uniform int texCount;
+            uniform int doVignette;
+            uniform float invert;
+            uniform vec2 colorSep;
 
-                accelerations[loc+0] = (noise.noise(x/particleField.width*13, 
-                                             y/particleField.height*9,0)) * 500;
-                accelerations[loc+1] = (noise.noise(x/particleField.width*33, 
-                                             y/particleField.height*11,0)) * 500;
-                accelerations[loc+0] = 0;
-                accelerations[loc+1] = 0;
-                accelerations[loc+2] = r;
-                accelerations[loc+3] = 0;
+            vec4 highpass(vec4 clr) {
+                if (cutoff == 0.0) return clr;
+                clr.x = clr.x > cutoff ? clr.x : 0.0;
+                clr.y = clr.y > cutoff ? clr.y : 0.0;
+                clr.z = clr.z > cutoff ? clr.z : 0.0;
+                if (clr.x > cutoff || clr.y > cutoff || clr.z > cutoff) {
+                    return vec4(.3,.3,1.0,1.0);
+                }
+                return clr;
             }
-        }
-        acce = accelerations;
-        particleField2.init(gl, partShader, partShader, positions, velocities, accelerations);
+         
+            // component separation
+            vec4 sep(sampler2D tex) {
+                if (colorSep.x == 0. && colorSep.y == 0.)
+                    return texture2D(tex, uv);
 
-        //
-        // Grain texture
-        //
-        var grain = new Float32Array(grainTex.width * grainTex.height);
-        for (var x = 0; x < grainTex.width; x++) {
-            for (var y = 0; y < grainTex.height; y++) {
-                var loc = (x*grainTex.height+y);
-                var r = Math.random();
-                grain[loc] = (r > .80) ? (r*.036) : 0;
-            }
-        }
-        grainTex.init(gl, grain, gl.ALPHA, gl.ALPHA);
+                vec4 g = texture2D(tex, uv+colorSep);
+                vec4 r = texture2D(tex, uv+-1.*colorSep);
+                vec4 b = texture2D(tex, uv+vec2(colorSep.y*-1., colorSep.x));
 
-        //
-        // Cube grid
-        //
-        var noisy = new Float32Array(noiseTex.width * noiseTex.height*3);
-        for (var x = 0; x < cx; x++) {
-            for (var y =0; y < cy; y++) {
-                n = noise.noise(x/cx*24,y/cy*24,0);
-                nx = noise.noise(x/cx*77,y/cy*84,0);
-                ny = noise.noise(x/cx*51,y/cy*62,0);
-                noisy[(x*noiseTex.width+y)*3+0] = nx*80;
-                noisy[(x*noiseTex.width+y)*3+1] = ny*80;
-                noisy[(x*noiseTex.width+y)*3+2] = (n+1)*.5*80;
-                cubes.push(x,y,0,.35 + .45*n,cx,cy);
-                //cubes.push(x,y,0,.1+Math.random()*.5,cx,cy);
-                //cubes.push(x,y,0,0.2,cx,cy);
-            }
-        }
-        cubes.init(gl);
-        noiseTex.init(gl, noisy, gl.RGB, gl.RGB);
-
-        //
-        // Pair of dancing cubes
-        //
-        cube.push(5,0,0,3.0,1,1);
-        cube.push(-5,0,0,3.0,1,1);
-        cube.init(gl);
-
-
-        //curveDrawShader = new Lab.Shader("curveDraw-fs", "curveDraw-vs", ["tex0", "time"], ["vertex"]);
-        //curveDrawShader.init(gl);
-        //curveUpdateShader = null; //new Lab.Shader("curveUpdate-fs", "curveUpdate-vs", ["tex0"], ["vertex"]);
-        //curveUpdateShader.init(gl);
-
-        //           x0  y0  x1   y1  shift amp velocity width
-        for (i = 0; i < 1000; i++) {
-            var r = Math.random();
-            var r2 = Math.random();
-            var r3 = Math.random();
-            var r4 = Math.random();
-           //curves.push(.25, .5, .75, .5,   r3*10000,   1,    1,     .2  ); 
-        }
-
-        //curves.init(gl, curveDrawShader, curveUpdateShader);
-    
-    } 
- 
-    var rTri = 0;
-
-    function drawFbo(shd, backFacing) {
-        fbo.bind(gl);
-        
-        // setup the off-screen projection & viewport
-        mat4.perspective(45, fbo.width / fbo.height, 10.0, 4000.0, pMatrix);
-
-        mat4.translate(mvMatrix, [0, 0, -60]);
-        
-        // rotate and twist
-        //mat4.rotate(mvMatrix, degToRad(lastTime/10), [1, 1, 0]);
-        //mat4.rotate(mvMatrix, degToRad(lastTime/10), [0, 0, 1]);
-
-        // spin
-        mat4.rotate(mvMatrix, degToRad(45), [0, 0, 1]);
-        mat4.rotate(mvMatrix, degToRad(lastTime/10), [1, 0, 0]);
-        mat4.rotate(mvMatrix, degToRad(lastTime/10), [0, 1, 0]);
- 
-        setMatrixUniforms(shd.prog);
-
-        gl.enable(gl.CULL_FACE);
-        if (backFacing) {
-            // we actually want the back-facing primitives to make it
-            // easier to visualize, so set the front faces to cull
-            gl.cullFace(gl.FRONT);
-            particleField2.attract.bind(gl);
-        } else {
-            gl.cullFace(gl.BACK);
-            particleField.attract.bind(gl);
-        }
-
-        gl.disable(gl.DEPTH_TEST);
-        //curves.draw(gl, lastTime);
-        gl.enable(gl.DEPTH_TEST);
-        cube.draw(gl, shd.prog);
-
-        fbo.bind(gl);
-        gl.disable(gl.DEPTH_TEST);
-        //curves.draw(gl, lastTime);
-        gl.enable(gl.DEPTH_TEST);
-        shd.bind(gl);
-        cube.draw(gl, shd.prog);
-        gl.cullFace(gl.BACK);
-
-        fbo.unbind(gl);
-    }
- 
-    function drawGuide(shd) {
-        // 
-        // Draw the guide for the off-screen depth pass
-        //
-        //gl.uniform1i(shd.prog.doTex, 0);
-        gl.uniform1f(shd.prog.res, 1000);
-        setMatrixUniforms(shader.prog);
-        cube.draw(gl, shd.prog);
-    }
-
-    function drawScreenCubes(shd,x,y,z,rx,ry,rz) {
-        mvPushMatrix();
-        mat4.rotate(mvMatrix, degToRad(ry), [0, 1, 0]);
-        mat4.rotate(mvMatrix, degToRad(rz), [0, 0, 1]);
-        mat4.rotate(mvMatrix, degToRad(rx), [1, 0, 0]);
-        mat4.translate(mvMatrix, [x, y, z]);
-
-        //gl.uniform1i(shd.prog.doTex, 1);
-        gl.uniform1i(shd.prog.doWave, render.doWave ? 1 : 0);
-        gl.uniform1i(shd.prog.tex0, 0)
-        gl.uniform1f(shd.prog.res, render.res);
-
-        setMatrixUniforms(shader.prog); 
-
-        cubes.draw(gl, shd.prog);
-
-        gl.bindTexture(gl.TEXTURE_2D, null);
-        //gl.uniform1i(shd.prog.doTex, 0);
-        mvPopMatrix();
-    }
-
-    cam.loc = vec3.create([0,0,0]);
-    cam.center = vec3.create([0,0,-50]);
-    cam.up = vec3.create([0,1,0]);
-
-    var inputs = {};
-    function drawScene() {
-        anim.getShot().onDraw(lastTime, lastTimeDelta);
-
-        //gl.clear(gl.COLOR_BIT | gl.DEPTH_BIT);
-        //curves.draw(gl, lastTime);
-        //return;
-
-        //cam.loc = vec3.create([0.03*Math.sin(lastTime),0,0]);
-        //cam.loc[0] = 50*Math.cos(lastTime/800);
-        //cam.loc[2] = 50*Math.sin(lastTime/800);
-
-        //render.res = 1000; //lastTime/4000); //1.+(.5*Math.sin(lastTime/1000.)+.6)*150.;
-        //render.res = Math.min(1000, render.res+.2); //lastTime/4000); //1.+(.5*Math.sin(lastTime/1000.)+.6)*150.;
-        /*
-        if (render.time.scale != 0.5001)
-            if (render.time.scale > 25) {
-                render.time.scale = 0.1001;
-                cam.loc[2] -= 20;
-                cam.loc[2] += 10;
-            } else {
-                render.time.scale += 0.1;
-            }
-        */
-        //render.res = 1.+(.5*Math.sin(lastTime/1000.)+.6)*150.;
-
-        particleField.update(gl, lastTime, lastTimeDelta/1000, render.doAttract ? 1 : 0);
-        particleField2.update(gl, lastTime, lastTimeDelta/1000, render.doAttract ? 1 : 0);
-
-        /* DEBUG FIELD OUTPUT
-        //field.update(gl, lastTime, 0);
-        gl.uniform1i(particleField.pos.shader.prog.mode, 1);
-
-        // clear main screen buffer
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-        particleField.pos.render(gl, lastTime, lastTimeDelta/1000, true);
-        //field.render(gl, lastTime, 0, true);
-        return;
-        */
-
-
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-        var shd = shader; 
-        shd = depthShader;
-        shd.bind(gl);
-        //gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
- 
- 
-        mat4.identity(mvMatrix);
- 
-        //mat4.translate(mvMatrix, [-70.5, -70.0, 130.0]);
-        //mat4.translate(mvMatrix, [-1.5, 0.0, -17.0]);
-
-
-        // 1
-	mvPushMatrix();
-        inputs.x = inputs.x || document.getElementById("x");
-        inputs.y = inputs.y || document.getElementById("y");
-        inputs.z = inputs.z || document.getElementById("z");
-        inputs.rx = inputs.rx || document.getElementById("rx");
-        inputs.ry = inputs.ry || document.getElementById("ry");
-        inputs.rz = inputs.rz || document.getElementById("rz");
-	x = parseFloat(inputs.x.value);
-	y = parseFloat(inputs.y.value);
-	z = parseFloat(inputs.z.value);
-	rx = parseFloat(inputs.rx.value);
-	ry = parseFloat(inputs.ry.value);
-	rz = parseFloat(inputs.rz.value);
-	// 2
-        mvPushMatrix();
-
-
-        //
-        // Depth Pass
-        //
-
-        // 3
-        mvPushMatrix();
-        // 4
-        mvPushMatrix();
-
-        //
-        // update the position/velocity/acceleration
-        //
-
-        Lab.trace("Field", function() {
-            if (render.updateField) {
-                field.shader.bind(gl);
-                field.update(gl, lastTime, 0.5);
-            }
-        });
-
-        Lab.trace("Viewport", function() {
-            gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-        });
-        
-
-        // add the output of the field render to the 
-        // pseudo-depth buffer in the fbo
-        Lab.trace("Cubes/Particles", function() {
-            fbo.bind(gl);
-            fbo.clear(gl);
-            particleField.attract.bind(gl);
-            particleField.attract.clear(gl);
-            //gl.disable(gl.DEPTH_TEST);
-            //field.shader.bind(gl);
-            //field.render(gl, lastTime, 0.5,true);
-            //gl.enable(gl.DEPTH_TEST);
-
-            shd.bind(gl);
-            drawFbo(shd, false);
-        });
-
-        //
-        // Switch to screen buffer
-        //
-
-        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-        //mat4.ortho(45, gl.viewportWidth / gl.viewportHeight, 0.1, render.zClip, pMatrix);
-        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, render.zClip, pMatrix);
-        shd = shader;
-        shd.bind(gl);
-        setMatrixUniforms(shd.prog);
-
-        gl.uniform1f(shd.prog.time, lastTime);
-
-        //
-        // Draw the guide to visualize input
-        //
-        //drawGuide(shd);
-
-        // 3
-	mvPopMatrix();
-
-        mvPushMatrix();
-        Lab.trace("lookAt", function() {
-            // camera    loc      center    up      dest
-            mat4.lookAt(cam.loc, cam.center, cam.up, mvMatrix);
-        });
-
-
-        Lab.trace("drawScreenCubes", function() {
-            //
-            // Draw the on-screen buffer
-            //
-            ppFinal.bind(gl);
-            ppFinal.fbo.clear(gl);
-
-            // bind positioning texture
-            gl.activeTexture(gl.TEXTURE0);
-            var t = lastTime/1000;
-            render.posTex = render.posTex || fbo.tex;
-            gl.bindTexture(gl.TEXTURE_2D, render.posTex);
-
-            drawScreenCubes(shd,x,y,z,rx,ry,rz);
-            ppFinal.unbind(gl);
-            mvPopMatrix();
-        });
-
-        //
-        // Draw the front faces to the back buffer
-        //
-        // 4
-        Lab.trace("Cubes/Particles", function() {
-            mvPushMatrix();
-            shd = depthShader;
-            shd.bind(gl);
-            fbo.bind(gl);
-            fbo.clear(gl);
-            particleField2.attract.bind(gl);
-            particleField2.attract.clear(gl);
-            drawFbo(shd, true);
-            mvPopMatrix()
-        });
-
-        //
-        // Finally render the front faces to the screen buffer
-        //
-        mvPushMatrix();
-        // camera    loc      center    up      dest
-        mat4.lookAt(cam.loc, cam.center, cam.up, mvMatrix);
-
-        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-        //mat4.ortho(45, gl.viewportWidth / gl.viewportHeight, 0.1, render.zClip, pMatrix);
-        mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, render.zClip, pMatrix);
-
-
-        Lab.trace("drawScreenCubes", function() {
-            shd = shader;
-            shd.bind(gl);
-            setMatrixUniforms(shd.prog);
-            ppFinal.bind(gl);
-
-            // bind positioning texture
-            gl.activeTexture(gl.TEXTURE0);
-            render.posTex = render.posTex || fbo.tex;
-            gl.bindTexture(gl.TEXTURE_2D, render.posTex);
-
-            drawScreenCubes(shd,x,y,z,rx,ry,rz);
-            ppFinal.unbind(gl);
-            ppFinal.swap();
-        }); 
-        mvPopMatrix();
-
-        if (true || render.bloom) {
-            //Lab.trace("Bloom", function() {
-                bloom.doBlur = render.bloom;
-                bloom.render(gl, ppFinal._src, ppFinal._dst);
-            //});
-        } else {
-            Lab.trace("NoBloom", function() {
-                copyShader.bind(gl);
-                ppFinal.bind(gl, copyShader.prog.tex0);
-                gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-                gl.vertexAttribPointer(copyShader.prog.vertex, this.quad.itemSize, gl.FLOAT, false, 0,0);
-                gl.enableVertexAttribArray(copyShader.prog.vertex);
-                gl.drawArrays(gl.TRIANGLES, 0, this.quad.length);
-            });
-        }
-        
-        Lab.trace("Sep-Vin-Inv-CombineBloom", function() {
-            bltShader.bind(gl);
-            ppFinal.swap();
-            ppFinal.unbind(gl);
-
-            gl.uniform1i(bltShader.prog.texCount, 2)
-            gl.uniform1f(bltShader.prog.cutoff, 0.0)
-            gl.uniform1i(bltShader.prog.doVignette, render.vignette ? 1 : 0);
-
-            if (render.colorSep) {
-                gl.uniform2f(bltShader.prog.colorSep, render.sep[0], render.sep[1]);
-            } else {
-                gl.uniform2f(bltShader.prog.colorSep, .0, .0);
+                return vec4(r.x,g.y,b.z, 1.0);
             }
 
-            gl.uniform1i(bltShader.prog.tex0, 0);
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, ppFinal._src);
-
-            gl.uniform1i(bltShader.prog.tex1, 1);
-            gl.activeTexture(gl.TEXTURE1);
-            gl.bindTexture(gl.TEXTURE_2D, ppFinal._dst);
-
-            gl.uniform1f(bltShader.prog.invert, render.invert ? 1 : 0);
-
-            gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-            gl.vertexAttribPointer(bltShader.prog.vertex, this.quad.itemSize, gl.FLOAT, false, 0,0);
-            gl.enableVertexAttribArray(bltShader.prog.vertex);
-            gl.drawArrays(gl.TRIANGLES, 0, this.quad.length);
-            gl.uniform1f(bltShader.prog.invert, 0);
-        })
-
-        if (render.schmutz) {
-            gl.clear(gl.DEPTH_BUFFER_BIT);
-            //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-            schShader.bind(gl);
-            gl.enable(gl.BLEND);
-            gl.blendEquation(gl.FUNC_ADD);
-            gl.blendFunc(gl.ONE_MINUS_DEST_COLOR, gl.ONE_MINUS_SRC_ALPHA);
-            //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-            gl.vertexAttribPointer(schShader.prog.vertex, this.quad.itemSize, gl.FLOAT, false, 0,0);
-            gl.enableVertexAttribArray(schShader.prog.vertex);
-            gl.drawArrays(gl.TRIANGLES, 0, this.quad.length);
-            //throw("poo");
-            gl.disable(gl.BLEND);
-        }
-
-        if (render.grain) {
-            Lab.trace("Grain", function() {
-                gl.clear(gl.DEPTH_BUFFER_BIT);
+            vec4 vignette(vec4 color) {
+                if (doVignette != 0) {
+                    float d = abs(length(uv - .5));
+                    if (d > 0.0)
+                        color = vec4(vec3(clamp(1.-(d),0.,1.)*color), 1.0);
+                }
                 
-                gl.enable(gl.BLEND);
-                gl.blendEquation(gl.FUNC_ADD);
-                gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-
-                grainShader.bind(gl);
-                grainTex.bind(gl, gl.TEXTURE0);
-                gl.uniform1i(grainShader.prog.tex0, 0);
-                gl.uniform1f(grainShader.prog.time, lastTime);
-                gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-                gl.vertexAttribPointer(grainShader.prog.vertex, this.quad.itemSize, gl.FLOAT, false, 0,0);
-                gl.enableVertexAttribArray(grainShader.prog.vertex);
-                gl.drawArrays(gl.TRIANGLES, 0, this.quad.length);
-
-                /*
-                */
-                gl.disable(gl.BLEND);
-            });
-        }
-
-
-        // 2
-        mvPopMatrix();
-        // 1
-        mvPopMatrix();
-
-        // 0
-        mvPopMatrix();
-    }
- 
-    
-    // world time
-    var lastTime = 0;
-    var lastTimeDelta = 0;
-
-    var startTime = 0;
-    var frame = 0;
-
-    // real time
-    var _timeNow = 0;
-    var _timeDelta = 0;
-    var _fpsLabel;
-    var _fpsTotal = 0;
-    var _frameCount = 0;
-    var _timeLabel;
-    var _uiTick = 0;
-    var _uiTime = 0;
-    var _soundtrack;
-    var request = null;
-    var resp;
-
-    function GetMenvFrame() {
-        if (!request) {
-            request = new XMLHttpRequest();
-            request.onerror = function() {console.log("boo!")}
-            request.onreadystatechange = function() { 
-                if (request.readyState != 4) return;
-                if (request.status != 200) return;
-                resp = eval("(" + request.responseText + ")");
-                cam.loc = resp.cam.loc;
-                cam.center = resp.cam.center;
-                mt = parseFloat(resp.frame) / 24 * 1000;
-                _timeDelta = mt - _timeNow;
-                _timeNow = mt;
+                return color;
             }
-        }
-        if (request.readyState != 0 && request.readyState != 4) { 
-            return;
-        }
-        
-        request.open('GET', 'http://localhost:8000', true);
-        request.send(null);
-        //requestAnimFrame(GetMenvFrame());
-    }
+
+            void main() {
+                gl_FragColor = highpass(sep(tex0));
+
+                if (texCount > 1) 
+                    gl_FragColor += sep(tex1);
+
+                if (texCount > 2) 
+                    gl_FragColor += sep(tex2);
+
+                if (texCount > 3) 
+                    gl_FragColor += 2.*sep(tex3);
+                
+                gl_FragColor = vignette(gl_FragColor);
+            }
+        </script> 
+        <script id="blt-vs" type="x-shader/x-vertex"> 
+            attribute vec2 vertex;
+            varying vec2 uv;
+            uniform float stretchFactor;
+            void main() {
+                uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
+                gl_Position = vec4(vertex.x,vertex.y,0.,1.);
+            }
+        </script> 
+
+        <!-- RAW COPY SHADER -->
+        <script id="copy-fs" type="x-shader/x-fragment"> 
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+         
+            varying vec2 uv;
+            uniform sampler2D tex0;
+            void main() {
+                gl_FragColor = texture2D(tex0, uv);
+            }
+        </script> 
+        <script id="copy-vs" type="x-shader/x-vertex"> 
+            attribute vec2 vertex;
+            varying vec2 uv;
+            void main() {
+                uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
+                gl_Position = vec4(vertex.x,vertex.y,0.,1.);
+            }
+        </script> 
+
+        <!-- BLUR SHADER -->
+        <script id="blur-fs" type="x-shader/x-fragment"> 
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+         
+            varying vec2 uv;
+            uniform sampler2D tex0;
+
+            uniform float coefficients[3];
+            uniform float offsetx;
+            uniform float offsety;
+            uniform int huge;
+
+            void main(void)
+            {
+                vec4 c;
+                vec2 offset = vec2(offsetx, offsety);
+
+                c  = coefficients[0] * texture2D(tex0, uv - offset);
+                c += coefficients[1] * texture2D(tex0, uv);
+                c += coefficients[2] * texture2D(tex0, uv + offset);
+
+                if (huge > 0) {
+                    float coef = coefficients[0] * .2;
+                    for (float i = 2.; i < 10.; i+=1.) {
+                        c += coef * texture2D(tex0, uv + i*offset);
+                        c += coef * texture2D(tex0, uv - i*offset);
+                        coef *= .99;
+                    }
+                    for (float i = 10.; i < 80.; i+=5.) {
+                        c += coef * texture2D(tex0, fract(uv + i*offset));
+                        c += coef * texture2D(tex0, fract(uv - i*offset));
+                        coef *= .99;
+                    }
+                }
+
+                gl_FragColor = c;
+            } 
+        </script> 
+         
+        <script id="blur-vs" type="x-shader/x-vertex"> 
+            attribute vec2 vertex;
+            varying vec2 uv;
+            void main() {
+                uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
+                gl_Position = vec4(vertex.x,vertex.y,0.,1.);
+            }
+        </script> 
+
+        <!-- LENS SCHMUTZ SHADER -->
+        <script id="schmutz-fs" type="x-shader/x-fragment"> 
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+         
+            varying vec2 uv;
+            uniform sampler2D tex0;
+
+            int ellipse(vec2 uv, vec2 pos, vec2 rad) {
+                vec2 dp = uv - pos;
+                return (dp.x*dp.x)/(rad.x*rad.x) 
+                     + (dp.y*dp.y)/(rad.y*rad.y) <= 1. ? 1 : 0;
+            }
+
+            vec4 schmutz(vec2 uv) {
+                vec4 c = vec4(0.,0.,0.,0.);
+
+                // test each schmutz spot
+                vec2 spot1 = vec2(0.5, 0.5);
+                if (1 == ellipse(uv, vec2(0.1, 0.1), vec2(.015,.02)))
+                    return vec4(1.,1.,1.,.1);
 
 
-    function animate() {
-        if (MENV_MODE) {
-            //GetMenvFrame();
-            //_timeNow = _timeNow || 0;
-            //_timeDelta = mt - _timeNow;
-            //_timeNow = mt;
-        } else if (RENDER_MODE) {
-            _timeNow += RENDER_SPF;
-            _timeDelta = RENDER_SPF;
-        } else {
-            var t = _timeNow;
-            _timeNow = new Date().getTime() - _soundtrack._startTime;
-            //_timeNow = _soundtrack.currentTime*1000; //new Date().getTime();
-            if (startTime == 0) startTime = _timeNow;
-            _timeNow = _timeNow - startTime;
-            _timeDelta = _timeNow - t;
-        }
-        anim.update(_timeNow/1000);
-        lastTimeDelta = _timeDelta * render.time.scale;
-        lastTime += lastTimeDelta;
-        _uiTick++;
-        _uiTime += _timeDelta;
-        _frameCount++;
-        _fpsTotal += _timeDelta/1000;
+                return c;
+            }
 
-        if (_uiTick%3 == 0) {
-            _fpsLabel = _fpsLabel || document.getElementById("fpsLabel");
-            _timeLabel = _timeLabel || document.getElementById("timeLabel");
-            _timeLabel.innerHTML = "" + (_timeNow/1000).toFixed(1) + "s &nbsp; "
+            void main(void)
+            {
+                vec4 c = vec4(0.,0.,0.,0.); //texture2D(tex0, uv);
 
-            //_timeLabel.innerHTML += "Audio: " + _soundtrack.currentTime.toFixed(1) + "s &nbsp; "
-            var delta = Math.abs(_timeNow - _soundtrack.currentTime*1000);
-            _timeLabel.innerHTML += "Delta: " + delta.toFixed(0) + "ms "
-            //if (delta > 250) {
-            //    _soundtrack._startTime = new Date().getTime() - _soundtrack.currentTime;
-            //}
-        }
-        if (_uiTick == 9) {
-            _fpsLabel.innerHTML = "FPS: " + (1 / (_uiTime/(_uiTick) / 1000)).toFixed(1);
-            if (DEBUG_MODE)
-                _fpsLabel.innerHTML += " [dbg]"
-            else if (RENDER_MODE)
-                _fpsLabel.innerHTML += " [render]"
-            else
-                _fpsLabel.innerHTML += " [opt]"
-            _uiTick = 0;
-            _uiTime = 0;
-        }
-    }
- 
- 
-    function tick() {
-        if (hadError) {
-            console.log("render halted");
-            _fpsLabel.innerHTML = "FPS: " + (_frameCount/_fpsTotal).toFixed(2) + Lab.report();
-            return;
-        }
-        hadError = true;
+                vec4 s = schmutz(uv);
 
-        requestAnimFrame(function() { Lab.accum("tick", tick)}, canvas);
-        Lab.accum("DrawScene", function() {
-            drawScene();
-        });
-        Lab.count("Frames", 1);
-        Lab.accum("Animate", function() {
-            animate();
-        });
-        if (RENDER_MODE) {
-            postImage(canvas, frame);
-            frame++;
-        }
-        hadError = false;
-    }
- 
-    var ty;
-    var tx;
-    var tz;
-    var zoom;
-    var pan, dolly;
-    var isDown = false;
-    var lastx, lasty;
-    function wheelEvent(e) {
-        ty = ty || document.getElementById("y");
-        zoom = zoom || parseInt(ty.value);
-        zoom -= e.wheelDelta / 5.0;
-        ty.value = zoom;
-    }
+                gl_FragColor = c+s;
+            } 
+        </script> 
+         
+        <script id="schmutz-vs" type="x-shader/x-vertex"> 
+            attribute vec2 vertex;
+            varying vec2 uv;
+            void main() {
+                uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
+                gl_Position = vec4(vertex.x,vertex.y,0.,1.);
+            }
+        </script> 
 
-    function dragEvent(e) {
-        tx = tx || document.getElementById("x");
-        tz = tz || document.getElementById("z");
-        pan = pan || parseInt(tx.value);
-        dolly = dolly || parseInt(tz.value);
-        if (!isDown) return;
-        pan += (e.x - lastx) /8;
-        dolly -= (e.y - lasty) / 8;
-        lasty = e.y;
-        lastx = e.x;
-        tx.value = pan;
-        tz.value = dolly;
-    }
- 
-    var _audioReady = false;
-    var _glReady = false;
-    var _enableMouse = false;
+        <!-- PARTICLE UPDATE SHADER -->
+        <script id="particle-fs" type="x-shader/x-fragment"> 
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+         
+            #define POS 0
+            #define VEL 1
 
-    function start() {
-        canvas = document.getElementById("canvas");
-        if (_enableMouse) {
-            canvas.addEventListener("mousewheel", wheelEvent);
-            canvas.addEventListener("mousemove", dragEvent);
-            document.addEventListener("mousedown", function(e) { isDown=true; lastx = e.x; lasty=e.y; });
-            document.addEventListener("mouseup", function(e) { isDown=false; });
-            canvas.ondrag = dragEvent;
-        }
-        initGL(canvas);
+            varying vec2 uv;
+            uniform int mode;
+            uniform int init;
+            uniform int debug;
+            uniform int doAttract;
+            uniform float time;
+            uniform float dt;
+            uniform sampler2D tex0;
+            uniform sampler2D tex1;
+            uniform sampler2D tex2;
+            uniform sampler2D tex3;
 
-        testCanvas();
+            void main(void)
+            {
+                vec4 c;
+                vec4 old = texture2D(tex0, uv);
 
-        initShaders()
-        initBuffers();
- 
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
-        gl.enable(gl.DEPTH_TEST);
-        
-        _glReady = true;
+                if (mode == POS) {
+                    vec4 vel = texture2D(tex1, uv);
+                    //c = clamp(old + vec4(vec3(vel*dt), 1.0), 0.0, 1.0);
+                    c = old + vec4(vec3(vel*dt), 1.0);
+                } else if (mode == VEL) {
+                    vec4 accel = texture2D(tex1, vec2(uv.x, uv.y));
+                    //vec4 accel = texture2D(tex1, vec2(fract(pos.x), fract(pos.y)));
+                    vec4 pos = texture2D(tex2, uv);
+                    vec4 attr = texture2D(tex3, uv);
 
-        if (MENV_MODE)
-            setInterval(GetMenvFrame, 10);
+                    float drag = 1. - dt*1.333;
 
-        enable();
-    }
+                    if (doAttract > 0) { //time/1000. > 16.) {
+                        old.xyz = old.xyz*drag + 9.*(attr.xyz - pos.xyz)*dt;
+                    } else {
+                        old.x = old.x*drag + accel.x*dt;
+                        old.y = old.y*drag + accel.y*dt;
+                    }
 
-    function enable() {
-        if (!_audioReady || !_glReady) {
-            elm = document.getElementById("loading");
-            elm.innerHTML += ".";
-            setTimeout(enable, 500);
-            return;
-        }
-        elm = document.getElementById("loading");
-        //elm.innerHTML = "<a class='x' href='#' onclick='play();'>start</a>";
-        play()
-    }
+                    c = old;
+                } else {
+                    c = vec4(0.,1.,1.,1.);
+                }
 
-    function play() {
-        elm = document.getElementById("loadingArea");
-        elm.style.display = "none";
-        _soundtrack = document.getElementById("soundtrack");
-        _soundtrack.play();
-    }
-    
+                gl_FragColor = c;
+            } 
+        </script> 
+         
+        <script id="particle-vs" type="x-shader/x-vertex"> 
+            attribute vec2 vertex;
+            varying vec2 uv;
+            void main() {
+                uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
+                gl_Position = vec4(vertex.x,vertex.y,0.,1.);
+            }
+        </script> 
 
-var canvas2d;
-var texTitles;
-var textData;
+        <!-- DISTORTION SHADER -->
+        <!-- FILM GRAIN SHADER -->
+        <script id="grain-fs" type="x-shader/x-fragment"> 
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+         
+            varying vec2 uv;
+            uniform sampler2D tex0;
+            uniform float time;
+            void main() {
+                vec2 uvs = uv + vec2(sin(time), sin(sin(time)));
+                uvs.x = fract(uvs.x);
+                uvs.y = fract(uvs.y);
+                gl_FragColor = vec4(1.0, 1.0, 1.0, texture2D(tex0, uvs).a);
+                //gl_FragColor = mix(gl_FragColor, vec4(gl_FragColor.xyz, gl_FragColor.a+.1), mod(gl_FragCoord.y, 2.));
+            }
+        </script> 
+         
+        <script id="grain-vs" type="x-shader/x-vertex"> 
+            attribute vec2 vertex;
+            varying vec2 uv;
+            void main() {
+                uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
+                gl_Position = vec4(vertex.x,vertex.y,0.,1.);
+            }
+        </script> 
 
-function testCanvas() {
-    var elem = document.getElementById('textCanvas');
-    var size = 150;
+        <!-- CURVE DRAWING SHADER -->
+        <script id="curveDraw-fs" type="x-shader/x-fragment"> 
+            #ifdef GL_ES
+            precision highp float;
+            #endif
+         
+            varying vec2 uv;
+            uniform sampler2D tex0;
+            uniform float time;
 
-    if (elem && elem.getContext) {
-      var context = elem.getContext('2d');
-      if (context) {
-        canvas2d = context;
-        context.strokeStyle = '#f00';
-        context.font = "bold 32pt helvetica, verdana";
-        context.fillStyle   = '#000'; 
-        context.fillRect(0, 0, size, size);
-        context.fillStyle   = '#fff'; 
-        context.fillText("cubic", 20, 60); //30,100, 200);
-        context.fillText("dub", 38, 95); //30,100, 200);
+            vec4 testCurve(vec4 cv, vec4 cd) {
+                if (!(uv.x > cv.x && uv.x < cv.z &&
+                    uv.y > cv.y - cd.w && uv.y < cv.w + cd.w)) {
+                    return vec4(0.,0.,0.,0.);
+                }
 
-        var left = 50;
-        var top = 120;
+                float PI = 3.1416;
+                float t = (uv.x - cv.x) / (cv.z - cv.x);
+                float s = 2.* (.5 - (uv.y - (cv.y - cd.w)) / (2.*cd.w));
+                float c = .85*sin((cd.x + time/200. + t * 2. * PI ));
+                if (time == 0.)
+                    return vec4(1.,1.,0.,0.);
+                float h = 1. + 1.8*smoothstep(0., 1., max(0., t - .95) / 0.05);
+                float hc =  max(0.,  t-.975) / .025;
+                hc = 1. - (hc*hc*hc);
+                c = max(0., hc*h*t * .8 * cd.w - abs(s - c))*10.;
 
-        context.font = "14pt helvetica, verdana";
-        context.fillText("by", left-20, top-9); //30,100, 200);
-        context.font = "bold 14pt helvetica, verdana";
-        context.fillText("jeremy", left+00, top+3); //30,100, 200);
-        context.fillText("cowles", left+26, top+20); //30,100, 200);
+                if (c == 0.) 
+                    return vec4(0.);
 
-        /*
-        context.beginPath();
-        context.moveTo(0,0);
-        context.lineTo(10,10);
-        context.stroke();
-        context.fill();
-        context.closePath();
-        */
+                return vec4(0., 0., sin(t*2.*PI) + c*2.+20., 0.);
+            }
 
-        //
-        // XXX: straight up image data was not working (because of float textures, maybe?)
-        //      so even if it's not converted to height, it still needs to be float
-        //
-        texTitles = new Lab.Texture(size, size);
-        textData = new Float32Array(4*size*size);
-        raw =context.getImageData(0,0,size,size).data;
-        for (var i = 0; i < textData.length; i+=4) {
-            textData[i] = 0; // x
-            textData[i+1] = 0; // y
-            textData[i+2] = 0; // w
-            
-            // z
-            textData[i+2] = (raw[i+2]/ 255);
-            if (textData[i+2] > 0) 
-                textData[i+2] = Math.min(textData[i+2] + .2, 1.2);
-            textData[i+2] *= 10;
-        }   
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        texTitles.init(gl,textData);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-        //texTitles.init(gl,context.getImageData(0,0,size,size).data, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE);
-        /*
-        texTitles = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texTitles)
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, context.getImageData(0,0,size,size).data);
-        */
-        //gl.generateMipmap(gl.TEXTURE_2D);
+            #define count 1.
+            vec4 getColor(vec2 p) {
+                vec4 c = vec4(0.,0.,0.,1.);
+                for (float i = 0.; i < count; i++) {
+                    c += testCurve( texture2D(tex0, vec2(i/(count-1.), 0.)),
+                                    texture2D(tex0, vec2(i/(count-1.), 1.))  );
+                }
+                return c;
+            }
 
-
-      }
-    }
-}
-
-</script> 
- 
-</head> 
- 
- 
-                <!--
-        style=" position: absolute; top: 0; left: 0; -webkit-transform: scale3d(2.0, 2.0, 1.0); -webkit-transform-origin: 0 0 0; width:50%; height:50%; "  
-                -->
-<body onload="setTimeout(start, 1000); " style="margin: 0; padding: 0;color: #666; font-size: 10px; font-family: helvetica, arial, sans; letter-spacing: .3em; background-color: #000;" > 
-    <div style="display:table; width: 100%; height: 100%; #position: relative; overflow: hidden;">
-        <div style="text-align: center; #position: absolute; #right: 50%; #top: 50%; display: table-cell; vertical-align:middle;">
-            <div id="loadingArea" style="overflow: hidden; position: absolute; height: 100%; width: 100%; display: table-cell; vertical-align:middle;">
-                <div id="loading" style="position: absolute; width: 100%; top: 50%;  font-size: 20px;  text-align: center;">loading...</div>
-                <div style="position: absolute; width: 100%; top: 75%;  font-size: 10px;  text-align: center;">(also available on youtube here: <a target=_blank href="http://www.youtube.com/watch?v=Lo2zUMTnWF0">Cubic Dub</a>)</div>
+            void main() {
+                gl_FragColor = getColor(uv);;
+            }
+        </script> 
+         
+        <script id="curveDraw-vs" type="x-shader/x-vertex"> 
+            attribute vec2 vertex;
+            varying vec2 uv;
+            void main() {
+                uv = vec2((vertex.x+1.) / 2., (vertex.y+1.) / 2.);
+                gl_Position = vec4(vertex.x,vertex.y,0.,1.);
+            }
+        </script> 
+        <!-- 
+          *********************************************************
+            END SHADERS 
+          *********************************************************
+        -->
+    </head> 
+    <body onload="setTimeout(start, 1000);"> 
+        <div style="display:table; width: 100%; height: 100%; #position: relative; overflow: hidden;">
+            <div style="text-align: center; #position: absolute; #right: 50%; #top: 50%; display: table-cell; vertical-align:middle;">
+                <div id="loadingArea">
+                    <div id="loading">loading...</div>
+                    <div id="videoMessage">(also available on
+                    youtube here: <a target=_blank href="http://www.youtube.com/watch?v=Lo2zUMTnWF0">Cubic Dub</a>)</div>
+                </div>
+                <canvas id="canvas" width="1024" height="428"></canvas> 
+                <canvas id="textCanvas" width="150" height="150"></canvas>  
+                <div id="fps"><label id="fpsLabel"></label></div>
+                <div id="time"><label id="timeLabel"></label></div>
             </div>
-            <canvas id="canvas"
-                    style="width: 100%; height: 100%;margin: auto; #position: relative; #top: -50%; border: none;"
-                    width="1024" 
-                    height="428"></canvas> 
-            <canvas id="textCanvas" style="display: none; top: 1%; left: 30%; position: absolute;"
-                    width="150" 
-                    height="150"></canvas>  
-            <div style="top: 1%; position: absolute; left: 2%;"><label id="fpsLabel"></label></div>
-            <div style="top: 1%; display:none; width: 30%; text-align: right; position: absolute; left: 68%"><label id="timeLabel"></label></div>
         </div>
-    </div>
-    <div style="display:none">
-        Tx: <input id="x" value="-75" type=text></input>
-        Ty: <input id="y" value="30" type=text></input>
-        Tz: <input id="z" value="-80" type=text></input> <br>
-        Rx: <input id="rx" value="-60" type=text></input>
-        Ry: <input id="ry" value="0" type=text></input>
-        Rz: <input id="rz" value="0" type=text></input 
-    </div>
-    <audio id="soundtrack" 
-                src="dubstep-5.ogg" 
-                style="display: none" 
-                oncanplay="_audioReady = true;" 
-            onplaying="_soundtrack._startTime = new Date().getTime() - _soundtrack.currentTime*1000; Lab.accum('tick', tick)"></audio>
-</body> 
- 
+        <div style="display:none">
+            Tx: <input id="x" value="-75" type=text></input>
+            Ty: <input id="y" value="30" type=text></input>
+            Tz: <input id="z" value="-80" type=text></input> <br>
+            Rx: <input id="rx" value="-60" type=text></input>
+            Ry: <input id="ry" value="0" type=text></input>
+            Rz: <input id="rz" value="0" type=text></input 
+        </div>
+        <audio id="soundtrack" 
+               src="dubstep-5.ogg" 
+               style="display: none" 
+               oncanplay="_audioReady = true;" 
+               onplaying="_soundtrack._startTime = new Date().getTime() - _soundtrack.currentTime*1000; Lab.accum('tick', tick)">
+        </audio>
+    </body> 
 </html> 
-
