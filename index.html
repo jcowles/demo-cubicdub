@@ -111,7 +111,7 @@
                     }
                 }
                 gl_Position.xy += toff.xy; 
-                gl_Position.z += depth; // * 2.*(1.-(r*.5)*(r*.5));
+                gl_Position.z += depth;
                 gl_Position = uPMatrix * uMVMatrix * gl_Position; 
             }
         </script> 
@@ -126,7 +126,7 @@
          
             void main() {
                 vec4 color;
-                vec3 q = vposition.xyz; /// vposition.w;
+                vec3 q = vposition.xyz;
                 color = vec4(0.,0.,q.z,1.);
                 gl_FragColor = color;
             }
@@ -594,5 +594,5 @@
                oncanplay="_audioReady = true;" 
                onplaying="_soundtrack._startTime = new Date().getTime() - _soundtrack.currentTime*1000; Lab.accum('tick', tick)">
         </audio>
-    </body> 
+    </body>
 </html> 
