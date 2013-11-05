@@ -10,6 +10,9 @@ be used with an HTML5 synth, but got cut from the final demo. lab.js provides a
 namespace in which all other effects are nested, as well as some error handling
 mechanisms. trace.js provides profiling tools for performance.
 
+**/css**
+Styles for the markup to keep index.html clean.
+
 **/gl**
 All the effects and WebGL components are in here, the file names describe the 
 contents pretty well. The shaders for the various effects are in-lined in 
@@ -24,6 +27,10 @@ The transitions for the various effects.
 
 **index.html**
 The core shaders and glue for the demo.
+
+**main.js**
+The "production" javascript code. Much like a monolithic shader, all effects are
+embodied in this file as a state machine that can be controlled via exposed knobs.
 
 **deubstep-5.ogg**
 The music. I made this with an off-line sequencer/software-synth.
