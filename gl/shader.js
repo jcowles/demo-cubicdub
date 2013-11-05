@@ -79,7 +79,6 @@ Lab.Shader = function(fsId, vsId, uniforms, attribs) {
         for (i in this._attribs) {
             var attrib = this._attribs[i];
             this.prog[attrib] = gl.getAttribLocation(this.prog, attrib);
-            //gl.enableVertexAttribArray(this.prog[attrib])
             len++;
             // incase anyone is screwing with the array prototype
             if (len == this._attribs.length) break;

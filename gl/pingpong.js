@@ -39,7 +39,6 @@ Lab.PingPongBuffer = function (width, height, uniformTex0, interp, format) {
 
         // bind the dest texture 
         this.fbo.bind(gl, setViewport);
-        //gl.bindTexture(gl.TEXTURE_2D, this._dst);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this._dst, 0);
 
         if (this.inputSrc) {

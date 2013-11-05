@@ -76,15 +76,6 @@ Lab.Bloom = function(width, height) {
             gl.uniform1i(shader.prog.huge, (i > 0 && horizontal) ? 1 : 0);
             var ppi = this.pass0[i];
             ppi.bind(gl, shader.prog.tex0);
-            /*
-            gl.viewport(0,0,ppi.width,ppi.height);
-            gl.framebufferTexture2D(gl.FRAMEBUFFER, 
-                                    gl.COLOR_ATTACHMENT0, 
-                                    gl.TEXTURE_2D,
-                                    ppi._dst,
-                                    0);
-            gl.bindTexture(gl.TEXTURE_2D, ppi._src);
-            */
 
             var offset = 1.2 / ppi.height;
             if (horizontal)
@@ -124,15 +115,10 @@ Lab.Bloom = function(width, height) {
             gl.uniform1i(texAttrib[i], i);
             gl.activeTexture(texId[i]);
             gl.bindTexture(gl.TEXTURE_2D, this.pass0[i]._src);
-            //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-            //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         }
 
         gl.uniform1i(shader.prog.texCount, 4);
         gl.uniform1f(shader.prog.cutoff, 0.0);
-        //gl.clear(gl.COLOR_BIT | gl.DEPTH_BIT);
         this._drawQuad(gl, this.blt.shader);
         this.pass0[0].unbind(gl);
 
@@ -168,7 +154,6 @@ Lab.Bloom = function(width, height) {
         Lab.trace("Bloom-DownSample", function() {
             _this.downSample(gl);
             for (var i = 0; i < _this.pass0.length; i++) { _this.pass0[i].swap(); }
-            //gl.uniform1f(_this.blt.shader.prog.stretchFactor, 1.0);
         });
 
         if (this.doBlur) {
@@ -201,10 +186,7 @@ Lab.Bloom = function(width, height) {
             gl.uniform1i(shd.prog.tex0, 0);
             gl.uniform1i(shd.prog.combine, 0);
             gl.bindTexture(gl.TEXTURE_2D, destTexture);
-            //gl.bindTexture(gl.TEXTURE_2D, this.pass0[this.pass0.length-1]._src)
             this._drawQuad(gl, shd);
-            //throw("debug");
-            // debug
         }
     };
 };

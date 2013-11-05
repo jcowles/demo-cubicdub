@@ -36,7 +36,7 @@ Lab.Curves = function () {
 
         this.quad = Lab.Geom.makeQuad2D(gl);
 
-        this.curvesTex = new Lab.PingPongBuffer(this.curveCount, 2, null); //updateShader.prog.tex0);
+        this.curvesTex = new Lab.PingPongBuffer(this.curveCount, 2, null);
         this.curvesTex.init(gl, new Float32Array(this.cvs.concat(this.cds)));
 
         // temp: move _dst -> _src

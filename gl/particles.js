@@ -36,9 +36,6 @@ Lab.ParticleField = function(width, height) {
         this.pos.init(gl, posShader, positions);
         this.vel = new Lab.Field(this.width, this.height);
         this.vel.init(gl, velShader, velocities);
-        //this.accel = new Lab.Field(this.width, this.height);
-        //this.accel.init(gl, accelShader, accelerations);
-        //accelShader.checkVars([ "mode", "tex0", "tex1", "tex2" ], [ "vertex" ]);
         this.accel = new Lab.Fbo(this.width, this.height, gl.NEAREST);
         this.accel.init(gl, accelerations);
 

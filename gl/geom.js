@@ -118,21 +118,19 @@ Lab.Geom.Cubes = function() {
     ];
 
     this.init = function(gl) {
-	if (this.buff) gl.deleteBuffer(this.buff);
+        if (this.buff) 
+            gl.deleteBuffer(this.buff);
+
         this.buff = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.buff);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.all), gl.STATIC_DRAW); 
-	//gl.bufferData(gl.ARRAY_BUFFER,
-        //              new Float32Array(this.points.concat(this.normals, 
-        //                                                  this.colors,
-        //                                                  this.uvs)), 
-        //                               gl.STATIC_DRAW);
+        
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buff);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.all), gl.STATIC_DRAW); 
+
         this.buff.itemSize = 3;
-	this.buff.length = this.points.length/3;
+        this.buff.length = this.points.length/3;
         this.buff.normStart = this.points.length;
         this.buff.colorStart = this.points.length+this.normals.length;
         this.buff.uvStart = this.buff.colorStart + this.colors.length;
-	//delete this.points;
     };
 
     this.draw = function(gl, prog) {
@@ -142,35 +140,30 @@ Lab.Geom.Cubes = function() {
         var size = (3+3+4+2) * 4;
         if ('vertex' in prog) {
             gl.vertexAttribPointer(prog.vertex, this.buff.itemSize, gl.FLOAT, false, size, 0);
-            //gl.vertexAttribPointer(prog.vertex, this.buff.itemSize, gl.FLOAT, false, 0, 0);
             gl.enableVertexAttribArray(prog.vertex);
         }
         
         if ('normal' in prog){
             gl.vertexAttribPointer(prog.normal, this.buff.itemSize, gl.FLOAT, false, size, 3*4);
-            //gl.vertexAttribPointer(prog.normal, this.buff.itemSize, gl.FLOAT, false, 0, 4*this.buff.normStart);
             gl.enableVertexAttribArray(prog.normal);
         }
 
         if ('color' in prog) {
             gl.vertexAttribPointer(prog.color, this.buff.itemSize+1, gl.FLOAT, false, size, (3+3)*4);
-            //gl.vertexAttribPointer(prog.color, this.buff.itemSize+1, gl.FLOAT, false, 0, 4*this.buff.colorStart);
             gl.enableVertexAttribArray(prog.color);
         }
 
         if ('uv' in prog){
             gl.vertexAttribPointer(prog.uv, this.buff.itemSize-1, gl.FLOAT, false, size, (3+3+4)*4);
-            //gl.vertexAttribPointer(prog.uv, this.buff.itemSize-1, gl.FLOAT, false, 0, 4*this.buff.uvStart);
             gl.enableVertexAttribArray(prog.uv);
         }
 
         gl.drawArrays(gl.TRIANGLES, 0, this.primCount);
-        //gl.drawArrays(gl.TRIANGLES, 0, this.buff.length);
     };
 
     this.push = function(x, y, z, size, maxX, maxY) {
         // the x,y coords dictate the pseudo screen space location
-                //console.log(""+x+","+y+","+maxX+","+maxY+","+(x/maxX)+","+(y/maxY));
+        //console.log(""+x+","+y+","+maxX+","+maxY+","+(x/maxX)+","+(y/maxY));
 
         // loop over each face
         for (var face = 0; face < 6; face++) {
@@ -227,18 +220,17 @@ Lab.Geom.Lines = function() {
     this.buff = null;
 
     this.init = function(gl) {
-	if (this.buff) gl.deleteBuffer(this.buff);
-        this.buff = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this.buff);
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.points), gl.STATIC_DRAW);
+        if (this.buff) gl.deleteBuffer(this.buff);
+            this.buff = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buff);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.points), gl.STATIC_DRAW);
         this.buff.itemSize = 3;
-	this.buff.length = this.points.length / 3 ;
-	//delete this.points;
+        this.buff.length = this.points.length / 3 ;
     };
 
     this.draw = function(gl, prog) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buff);
-	gl.vertexAttribPointer(prog.vertex, this.buff.itemSize, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(prog.vertex, this.buff.itemSize, gl.FLOAT, false, 0, 0);
         gl.vertexAttribPointer(prog.normal, this.buff.itemSize, gl.FLOAT, false, 0, 0);
         gl.drawArrays(gl.LINES, 0, this.buff.length);
     };

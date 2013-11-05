@@ -11,11 +11,11 @@ Lab.Grid = function(x1, z1, x2, z2, y) {
     this.init = function(gl) {
         for (var x = this.x1; x <= this.x2; x++) {
            this.lines.push(x, this.z1, x, this.z2, this.y);
-	}
+        }
         for (var z = this.z1; z <= this.z2; z++) {
            this.lines.push(this.x1, z, this.x2, z, this.y);
         }
-	this.lines.init(gl);
+        this.lines.init(gl);
     };
 
     this.draw = function(gl, prog) {

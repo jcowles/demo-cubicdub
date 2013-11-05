@@ -25,7 +25,6 @@ Lab.Texture = function(width, height) {
         gl.bindTexture(gl.TEXTURE_2D, this.tex);
 
         //            target    levels, intformat,    width,  height, border, format,     type, data
-        //gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this.width, this.height, 0, gl.RGBA, gl.FLOAT, data);
         gl.texImage2D(gl.TEXTURE_2D, 0, intformat, this.width, this.height, 0, format, type, data);
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, this.magFilter);
