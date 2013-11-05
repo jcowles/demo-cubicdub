@@ -10,14 +10,11 @@
  
     
     function initGL(canvas) {
-        //try {
-            if (!DEBUG_MODE) 
-                gl =WebGLUtils.setupWebGL(canvas, { antialias: false,
-                                  stencil: true } );
-            else
-                gl =WebGLDebugUtils.makeDebugContext(canvas.getContext("experimental-webgl"));
+        if (!DEBUG_MODE) 
+            gl = WebGLUtils.setupWebGL(canvas, {antialias: false, stencil: true});
+        else
+            gl = WebGLDebugUtils.makeDebugContext(canvas.getContext("experimental-webgl"));
 
-        //} catch (e) { }
         if (!gl) {
             alert("Could not initialize WebGL -- please visit http://get.webgl.org/ for help.");
             hadError = true;
@@ -46,7 +43,6 @@
  
     function initShaders() {
         var uniforms = [ "time", 
-                        //"doTex", 
                         "doWave", 
                         "tex0", 
                         "uPMatrix", 
@@ -72,7 +68,6 @@
 
         uniforms    = [
                         "time", 
-                        //"doTex", 
                         "uPMatrix", 
                         "uMVMatrix", 
                         "uNMatrix",
@@ -83,7 +78,6 @@
         depthShader = new Lab.Shader("depth-fs", "depth-vs", uniforms, attribs);
         depthShader.init(gl);
         depthShader.prog.vertex  = depthShader.prog.aVertexPosition;
-        //shader.bind(gl);
 
         uniforms = [ "tex0" ];
         attribs  = [ "vertex" ];
@@ -131,13 +125,12 @@
     var grid = new Lab.Grid();
     var cubes = new Lab.Geom.Cubes();
     var cube = new Lab.Geom.Cubes();
-    var field = new Lab.Field(150, 150); //1024, 428);
+    var field = new Lab.Field(150, 150);
     var bloom = new Lab.Bloom(1024, 428);
     var particleField = new Lab.ParticleField(150, 150);
     var particleField2 = new Lab.ParticleField(150, 150);
     var grainTex = new Lab.Texture(1024, 428);
     var noiseTex = new Lab.Texture(150, 150);
-    //var curves = new Lab.Curves();
     var quad;
 
     //
@@ -201,27 +194,6 @@
         //
         var tempShader = new Lab.Shader("field-fs", "field-vs", field.uniforms, field.attribs);
         tempShader.init(gl);
-        /*
-        var initPattern = new Float32Array(field.width*field.height*4);
-        for (var x = 0; x < field.width; x++) {
-            for (var y = 0; y < field.height; y++) {
-                var xv = (x/(field.width-1)-.5)*2
-                var yv = (y/(field.height-1)-.5)*2
-                var s = .7*Math.cos(xv*Math.PI);
-                var idx = (y*field.width + x)*4;
-                if (s < yv+.1 && s > yv-.3) {
-                    initPattern[idx]   =  .0; // R
-                    initPattern[idx+1] =  .0; // G
-                    initPattern[idx+2] =  .0; // B
-                    initPattern[idx+3] = 15.0; // A
-                } else {
-                    initPattern[idx]   = .0;
-                    initPattern[idx+1] = .0;
-                    initPattern[idx+2] = .0;
-                    initPattern[idx+3] = .0;
-                }
-            }
-        }*/
 
         field.init(gl, tempShader, textData, true); //initPattern);
 
@@ -237,14 +209,14 @@
                 var loc = 4*(x*particleField.width+y);
                 positions[loc+0] = .0*y;
                 positions[loc+1] = .0*x;
-                positions[loc+2] = 0; //
-                positions[loc+3] = 1.0; //(x*y / (particleField.width*particleField.height));;
+                positions[loc+2] = 0; 
+                positions[loc+3] = 1.0;
 
                 var r = Math.random()*upSpeed;
                 r *= 1;
-                velocities[loc+0] = 0;//r; //0.00000;
-                velocities[loc+1] = 0;//r; //0.00000;
-                velocities[loc+2] = r //0.1;
+                velocities[loc+0] = 0;
+                velocities[loc+1] = 0;
+                velocities[loc+2] = r;
                 velocities[loc+3] = 1.0;
 
                 accelerations[loc+0] = (noise.noise(x/particleField.width*12, 
@@ -264,14 +236,14 @@
                 var loc = 4*(x*particleField.width+y);
                 positions[loc+0] = .0*y;
                 positions[loc+1] = .0*x;
-                positions[loc+2] = 0; //
-                positions[loc+3] = 1.0; //(x*y / (particleField.width*particleField.height));;
+                positions[loc+2] = 0;
+                positions[loc+3] = 1.0;
 
                 var r = Math.random()*upSpeed;
                 r *= 1;
-                velocities[loc+0] = 0;//r; //0.00000;
-                velocities[loc+1] = 0;//r; //0.00000;
-                velocities[loc+2] = r //0.1;
+                velocities[loc+0] = 0;
+                velocities[loc+1] = 0;
+                velocities[loc+2] = r;
                 velocities[loc+3] = 1.0;
 
                 accelerations[loc+0] = (noise.noise(x/particleField.width*13, 
@@ -313,8 +285,6 @@
                 noisy[(x*noiseTex.width+y)*3+1] = ny*80;
                 noisy[(x*noiseTex.width+y)*3+2] = (n+1)*.5*80;
                 cubes.push(x,y,0,.35 + .45*n,cx,cy);
-                //cubes.push(x,y,0,.1+Math.random()*.5,cx,cy);
-                //cubes.push(x,y,0,0.2,cx,cy);
             }
         }
         cubes.init(gl);
@@ -327,23 +297,12 @@
         cube.push(-5,0,0,3.0,1,1);
         cube.init(gl);
 
-
-        //curveDrawShader = new Lab.Shader("curveDraw-fs", "curveDraw-vs", ["tex0", "time"], ["vertex"]);
-        //curveDrawShader.init(gl);
-        //curveUpdateShader = null; //new Lab.Shader("curveUpdate-fs", "curveUpdate-vs", ["tex0"], ["vertex"]);
-        //curveUpdateShader.init(gl);
-
-        //           x0  y0  x1   y1  shift amp velocity width
         for (i = 0; i < 1000; i++) {
             var r = Math.random();
             var r2 = Math.random();
             var r3 = Math.random();
             var r4 = Math.random();
-           //curves.push(.25, .5, .75, .5,   r3*10000,   1,    1,     .2  ); 
         }
-
-        //curves.init(gl, curveDrawShader, curveUpdateShader);
-    
     } 
  
     var rTri = 0;
@@ -356,10 +315,6 @@
 
         mat4.translate(mvMatrix, [0, 0, -60]);
         
-        // rotate and twist
-        //mat4.rotate(mvMatrix, degToRad(lastTime/10), [1, 1, 0]);
-        //mat4.rotate(mvMatrix, degToRad(lastTime/10), [0, 0, 1]);
-
         // spin
         mat4.rotate(mvMatrix, degToRad(45), [0, 0, 1]);
         mat4.rotate(mvMatrix, degToRad(lastTime/10), [1, 0, 0]);
@@ -379,13 +334,11 @@
         }
 
         gl.disable(gl.DEPTH_TEST);
-        //curves.draw(gl, lastTime);
         gl.enable(gl.DEPTH_TEST);
         cube.draw(gl, shd.prog);
 
         fbo.bind(gl);
         gl.disable(gl.DEPTH_TEST);
-        //curves.draw(gl, lastTime);
         gl.enable(gl.DEPTH_TEST);
         shd.bind(gl);
         cube.draw(gl, shd.prog);
@@ -398,7 +351,6 @@
         // 
         // Draw the guide for the off-screen depth pass
         //
-        //gl.uniform1i(shd.prog.doTex, 0);
         gl.uniform1f(shd.prog.res, 1000);
         setMatrixUniforms(shader.prog);
         cube.draw(gl, shd.prog);
@@ -411,7 +363,6 @@
         mat4.rotate(mvMatrix, degToRad(rx), [1, 0, 0]);
         mat4.translate(mvMatrix, [x, y, z]);
 
-        //gl.uniform1i(shd.prog.doTex, 1);
         gl.uniform1i(shd.prog.doWave, render.doWave ? 1 : 0);
         gl.uniform1i(shd.prog.tex0, 0)
         gl.uniform1f(shd.prog.res, render.res);
@@ -421,7 +372,6 @@
         cubes.draw(gl, shd.prog);
 
         gl.bindTexture(gl.TEXTURE_2D, null);
-        //gl.uniform1i(shd.prog.doTex, 0);
         mvPopMatrix();
     }
 
@@ -432,77 +382,34 @@
     var inputs = {};
     function drawScene() {
         anim.getShot().onDraw(lastTime, lastTimeDelta);
-
-        //gl.clear(gl.COLOR_BIT | gl.DEPTH_BIT);
-        //curves.draw(gl, lastTime);
-        //return;
-
-        //cam.loc = vec3.create([0.03*Math.sin(lastTime),0,0]);
-        //cam.loc[0] = 50*Math.cos(lastTime/800);
-        //cam.loc[2] = 50*Math.sin(lastTime/800);
-
-        //render.res = 1000; //lastTime/4000); //1.+(.5*Math.sin(lastTime/1000.)+.6)*150.;
-        //render.res = Math.min(1000, render.res+.2); //lastTime/4000); //1.+(.5*Math.sin(lastTime/1000.)+.6)*150.;
-        /*
-        if (render.time.scale != 0.5001)
-            if (render.time.scale > 25) {
-                render.time.scale = 0.1001;
-                cam.loc[2] -= 20;
-                cam.loc[2] += 10;
-            } else {
-                render.time.scale += 0.1;
-            }
-        */
-        //render.res = 1.+(.5*Math.sin(lastTime/1000.)+.6)*150.;
-
         particleField.update(gl, lastTime, lastTimeDelta/1000, render.doAttract ? 1 : 0);
         particleField2.update(gl, lastTime, lastTimeDelta/1000, render.doAttract ? 1 : 0);
-
-        /* DEBUG FIELD OUTPUT
-        //field.update(gl, lastTime, 0);
-        gl.uniform1i(particleField.pos.shader.prog.mode, 1);
-
-        // clear main screen buffer
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-        particleField.pos.render(gl, lastTime, lastTimeDelta/1000, true);
-        //field.render(gl, lastTime, 0, true);
-        return;
-        */
-
 
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         var shd = shader; 
         shd = depthShader;
         shd.bind(gl);
-        //gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
- 
  
         mat4.identity(mvMatrix);
- 
-        //mat4.translate(mvMatrix, [-70.5, -70.0, 130.0]);
-        //mat4.translate(mvMatrix, [-1.5, 0.0, -17.0]);
-
 
         // 1
-    mvPushMatrix();
+        mvPushMatrix();
         inputs.x = inputs.x || document.getElementById("x");
         inputs.y = inputs.y || document.getElementById("y");
         inputs.z = inputs.z || document.getElementById("z");
         inputs.rx = inputs.rx || document.getElementById("rx");
         inputs.ry = inputs.ry || document.getElementById("ry");
         inputs.rz = inputs.rz || document.getElementById("rz");
-    x = parseFloat(inputs.x.value);
-    y = parseFloat(inputs.y.value);
-    z = parseFloat(inputs.z.value);
-    rx = parseFloat(inputs.rx.value);
-    ry = parseFloat(inputs.ry.value);
-    rz = parseFloat(inputs.rz.value);
-    // 2
+        x = parseFloat(inputs.x.value);
+        y = parseFloat(inputs.y.value);
+        z = parseFloat(inputs.z.value);
+        rx = parseFloat(inputs.rx.value);
+        ry = parseFloat(inputs.ry.value);
+        rz = parseFloat(inputs.rz.value);
+
+        // 2
         mvPushMatrix();
-
-
         //
         // Depth Pass
         //
@@ -515,7 +422,6 @@
         //
         // update the position/velocity/acceleration
         //
-
         Lab.trace("Field", function() {
             if (render.updateField) {
                 field.shader.bind(gl);
@@ -535,11 +441,6 @@
             fbo.clear(gl);
             particleField.attract.bind(gl);
             particleField.attract.clear(gl);
-            //gl.disable(gl.DEPTH_TEST);
-            //field.shader.bind(gl);
-            //field.render(gl, lastTime, 0.5,true);
-            //gl.enable(gl.DEPTH_TEST);
-
             shd.bind(gl);
             drawFbo(shd, false);
         });
@@ -549,7 +450,6 @@
         //
 
         gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-        //mat4.ortho(45, gl.viewportWidth / gl.viewportHeight, 0.1, render.zClip, pMatrix);
         mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, render.zClip, pMatrix);
         shd = shader;
         shd.bind(gl);
@@ -614,9 +514,7 @@
         mat4.lookAt(cam.loc, cam.center, cam.up, mvMatrix);
 
         gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-        //mat4.ortho(45, gl.viewportWidth / gl.viewportHeight, 0.1, render.zClip, pMatrix);
         mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, render.zClip, pMatrix);
-
 
         Lab.trace("drawScreenCubes", function() {
             shd = shader;
@@ -636,10 +534,8 @@
         mvPopMatrix();
 
         if (true || render.bloom) {
-            //Lab.trace("Bloom", function() {
-                bloom.doBlur = render.bloom;
-                bloom.render(gl, ppFinal._src, ppFinal._dst);
-            //});
+            bloom.doBlur = render.bloom;
+            bloom.render(gl, ppFinal._src, ppFinal._dst);
         } else {
             Lab.trace("NoBloom", function() {
                 copyShader.bind(gl);
@@ -685,16 +581,13 @@
 
         if (render.schmutz) {
             gl.clear(gl.DEPTH_BUFFER_BIT);
-            //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             schShader.bind(gl);
             gl.enable(gl.BLEND);
             gl.blendEquation(gl.FUNC_ADD);
             gl.blendFunc(gl.ONE_MINUS_DEST_COLOR, gl.ONE_MINUS_SRC_ALPHA);
-            //gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
             gl.vertexAttribPointer(schShader.prog.vertex, this.quad.itemSize, gl.FLOAT, false, 0,0);
             gl.enableVertexAttribArray(schShader.prog.vertex);
             gl.drawArrays(gl.TRIANGLES, 0, this.quad.length);
-            //throw("poo");
             gl.disable(gl.BLEND);
         }
 
@@ -715,8 +608,6 @@
                 gl.enableVertexAttribArray(grainShader.prog.vertex);
                 gl.drawArrays(gl.TRIANGLES, 0, this.quad.length);
 
-                /*
-                */
                 gl.disable(gl.BLEND);
             });
         }
@@ -773,7 +664,6 @@
         
         request.open('GET', 'http://localhost:8000', true);
         request.send(null);
-        //requestAnimFrame(GetMenvFrame());
     }
 
 
@@ -789,7 +679,6 @@
         } else {
             var t = _timeNow;
             _timeNow = new Date().getTime() - _soundtrack._startTime;
-            //_timeNow = _soundtrack.currentTime*1000; //new Date().getTime();
             if (startTime == 0) startTime = _timeNow;
             _timeNow = _timeNow - startTime;
             _timeDelta = _timeNow - t;
@@ -807,12 +696,8 @@
             _timeLabel = _timeLabel || document.getElementById("timeLabel");
             _timeLabel.innerHTML = "" + (_timeNow/1000).toFixed(1) + "s &nbsp; "
 
-            //_timeLabel.innerHTML += "Audio: " + _soundtrack.currentTime.toFixed(1) + "s &nbsp; "
             var delta = Math.abs(_timeNow - _soundtrack.currentTime*1000);
             _timeLabel.innerHTML += "Delta: " + delta.toFixed(0) + "ms "
-            //if (delta > 250) {
-            //    _soundtrack._startTime = new Date().getTime() - _soundtrack.currentTime;
-            //}
         }
         if (_uiTick == 9) {
             _fpsLabel.innerHTML = "FPS: " + (1 / (_uiTime/(_uiTick) / 1000)).toFixed(1);
@@ -918,7 +803,6 @@
             return;
         }
         elm = document.getElementById("loading");
-        //elm.innerHTML = "<a class='x' href='#' onclick='play();'>start</a>";
         play()
     }
 
@@ -947,26 +831,17 @@ function testCanvas() {
         context.fillStyle   = '#000'; 
         context.fillRect(0, 0, size, size);
         context.fillStyle   = '#fff'; 
-        context.fillText("cubic", 20, 60); //30,100, 200);
-        context.fillText("dub", 38, 95); //30,100, 200);
+        context.fillText("cubic", 20, 60);
+        context.fillText("dub", 38, 95);
 
         var left = 50;
         var top = 120;
 
         context.font = "14pt helvetica, verdana";
-        context.fillText("by", left-20, top-9); //30,100, 200);
+        context.fillText("by", left-20, top-9); 
         context.font = "bold 14pt helvetica, verdana";
-        context.fillText("jeremy", left+00, top+3); //30,100, 200);
-        context.fillText("cowles", left+26, top+20); //30,100, 200);
-
-        /*
-        context.beginPath();
-        context.moveTo(0,0);
-        context.lineTo(10,10);
-        context.stroke();
-        context.fill();
-        context.closePath();
-        */
+        context.fillText("jeremy", left+00, top+3);
+        context.fillText("cowles", left+26, top+20);
 
         //
         // XXX: straight up image data was not working (because of float textures, maybe?)
@@ -976,9 +851,9 @@ function testCanvas() {
         textData = new Float32Array(4*size*size);
         raw =context.getImageData(0,0,size,size).data;
         for (var i = 0; i < textData.length; i+=4) {
-            textData[i] = 0; // x
-            textData[i+1] = 0; // y
-            textData[i+2] = 0; // w
+            textData[i] = 0;    // x
+            textData[i+1] = 0;  // y
+            textData[i+2] = 0;  // w
             
             // z
             textData[i+2] = (raw[i+2]/ 255);
@@ -986,19 +861,10 @@ function testCanvas() {
                 textData[i+2] = Math.min(textData[i+2] + .2, 1.2);
             textData[i+2] *= 10;
         }   
+
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
         texTitles.init(gl,textData);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-        //texTitles.init(gl,context.getImageData(0,0,size,size).data, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE);
-        /*
-        texTitles = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texTitles)
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, context.getImageData(0,0,size,size).data);
-        */
-        //gl.generateMipmap(gl.TEXTURE_2D);
-
-
       }
     }
 }
