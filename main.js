@@ -767,6 +767,7 @@
     var _audioReady = false;
     var _glReady = false;
     var _enableMouse = false;
+    var _userStarted = false;
 
     function start() {
         canvas = document.getElementById("canvas");
@@ -796,21 +797,49 @@
     }
 
     function enable() {
+        elm = document.getElementById("loading");
         if (!_audioReady || !_glReady) {
-            elm = document.getElementById("loading");
             elm.innerHTML += ".";
             setTimeout(enable, 500);
             return;
         }
-        elm = document.getElementById("loading");
-        play()
+
+        var loadingArea = document.getElementById("loadingArea");
+        elm.innerHTML = "click here to start";
+        elm.style.cursor = "pointer";
+
+        var kickOff = function() {
+            if (_userStarted) return;
+            _userStarted = true;
+            elm.innerHTML = "loading...";
+            elm.style.cursor = "default";
+            play();
+        };
+
+        elm.addEventListener("click", kickOff, { once: true });
+        canvas.addEventListener("click", kickOff, { once: true });
+        document.addEventListener("keydown", kickOff, { once: true });
+
+        if (loadingArea) loadingArea.style.display = "block";
     }
 
     function play() {
         elm = document.getElementById("loadingArea");
-        elm.style.display = "none";
+        if (elm) elm.style.display = "none";
         _soundtrack = document.getElementById("soundtrack");
-        _soundtrack.play();
+        var promise = _soundtrack.play();
+        if (promise && promise.catch) {
+            promise.catch(function(err) {
+                console.log("Audio playback was blocked until user gesture", err);
+                _userStarted = false;
+                if (elm) elm.style.display = "block";
+                var loading = document.getElementById("loading");
+                if (loading) {
+                    loading.innerHTML = "click here to start";
+                    loading.style.cursor = "pointer";
+                }
+            });
+        }
     }
     
 
